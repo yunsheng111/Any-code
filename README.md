@@ -36,9 +36,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="33%">
 
-
 **Claude Code CLI 引擎**
-
 - 官方 Claude Code CLI 完整集成
 - 支持所有 Claude 模型（Opus、Sonnet 等）
 - Plan Mode 只读分析模式
@@ -49,7 +47,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="33%">
 
 **OpenAI Codex 引擎**
-
 - OpenAI Codex API 深度集成
 - 三种执行模式：
   - Full Auto（全自动执行）
@@ -62,7 +59,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="33%">
 
 **Google Gemini 引擎** 🆕
-
 - Gemini CLI 完整集成
 - 支持多种 Gemini 模型：
   - Gemini 3 Pro (Preview)
@@ -82,9 +78,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **统一会话管理**
-
 - 一键切换 Claude、Codex 和 Gemini 引擎
 - 统一的会话列表和历史
 - 引擎特定的图标和标识
@@ -95,7 +89,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **智能引擎选择**
-
 - 根据任务类型推荐引擎
 - 成本效益分析
 - 性能对比展示
@@ -113,9 +106,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **可视化项目管理**
-
 - 直观的项目和会话浏览器
 - 实时会话状态监控
 - 支持多项目并行管理
@@ -123,7 +114,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 多引擎会话统一展示
 
 **多标签页会话**
-
 - 同时管理多个会话（Claude + Codex）
 - 后台会话继续运行
 - 快速切换和恢复
@@ -134,7 +124,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **实时流式输出**
-
 - 流畅的 AI 响应显示
 - 支持 Markdown 实时渲染
 - 代码高亮和语法支持
@@ -142,7 +131,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 思维过程可视化
 
 **高级会话控制**
-
 - Continue（继续对话）
 - Resume（恢复会话）
 - Cancel（取消执行）
@@ -161,9 +149,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **精确计费**
-
 - 支持多模型定价计算
   - Opus 4.1: $15/$75 (input/output)
   - Sonnet 4.5: $3/$15
@@ -172,7 +158,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 实时成本更新
 
 **详细统计**
-
 - Token 分类统计
   - 输入/输出 Tokens
   - Cache 创建/读取 Tokens
@@ -183,7 +168,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **使用分析仪表板**
-
 - 总成本和 Token 使用概览
 - 按模型统计成本分布
 - 按项目分析使用情况
@@ -191,7 +175,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 导出使用报告
 
 **成本优化建议**
-
 - Cache 命中率分析
 - 成本节省计算
 - 效率评分系统
@@ -286,9 +269,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **透明翻译工作流**
-
 1. 用户输入中文提示词
 2. 自动检测并翻译为英文
 3. 发送英文到 AI API
@@ -297,7 +278,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 6. 用户看到中文响应
 
 **核心特性**
-
 - 基于 Hunyuan-MT-7B 模型
 - 翻译缓存加速
 - 智能语言检测
@@ -308,7 +288,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **渐进式翻译系统** 🆕
-
 - **8 种内容提取策略**
   - 自适应内容识别
   - 多层级结构解析
@@ -332,9 +311,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **配置选项**
-
 - 启用/禁用翻译
 - 置信度阈值调整（默认 0.7）
 - 缓存策略配置
@@ -346,7 +323,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **性能优化**
-
 - 翻译缓存命中率统计
 - 缓存大小管理
 - 一键清除缓存
@@ -355,7 +331,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - MD5 哈希去重
 
 **统计和监控**
-
 - 实时翻译状态显示
 - 翻译完成率追踪
 - 平均翻译时间
@@ -373,9 +348,7 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <tr>
 <td width="50%">
 
-
 **智能监控系统**
-
 - 实时追踪会话 Token 使用量
 - 自动检测上下文超限风险
 - 多会话并行监控
@@ -383,7 +356,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 详细的统计和分析
 
 **自动压缩触发**
-
 - 基于 Token 数量自动触发
 - 基于消息数量触发
 - 定时自动压缩
@@ -394,7 +366,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <td width="50%">
 
 **压缩策略配置**
-
 - 保留最近 N 条消息
 - 保留重要工具调用
 - 智能摘要生成
@@ -402,7 +373,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 可自定义压缩规则
 
 **压缩历史管理**
-
 - 完整的压缩历史记录
 - 压缩前后对比
 - Token 节省统计
@@ -410,7 +380,6 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 - 一键回滚压缩
 
 **性能和统计**
-
 - 压缩节省的 Token 数量
 - 压缩时间追踪
 - 压缩效率分析
@@ -467,21 +436,17 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <details>
 <summary><b>Windows 安装</b></summary>
 
-
 **方式一：MSI 安装包**（推荐）
-
 - 下载 `.msi` 文件
 - 双击运行安装程序
 - 按照向导完成安装
 
 **方式二：NSIS 安装包**
-
 - 下载 `.exe` 文件
 - 以管理员身份运行
 - 选择安装路径
 
 **方式三：便携版**
-
 - 下载 `.zip` 压缩包
 - 解压到任意目录
 - 运行 `Any Code.exe`
@@ -491,17 +456,14 @@ Any Code 是一个为 AI 驱动的代码开发工作流量身打造的专业桌�
 <details>
 <summary><b>macOS 安装</b></summary>
 
-
 **支持架构**: Apple Silicon (ARM64) + Intel (x86_64)
 
 **方式一：DMG 安装包**（推荐）
-
 1. 下载 `.dmg` 文件
 2. 双击挂载磁盘映像
 3. 拖拽应用到 Applications 文件夹
 
 **方式二：APP 应用包**
-
 1. 下载 `.app.tar.gz` 文件
 2. 解压并移动到 Applications
 
@@ -529,9 +491,7 @@ sudo codesign --force --deep --sign - "/Applications/Any Code.app"
 <details>
 <summary><b>Linux 安装</b></summary>
 
-
 **方式一：AppImage**（推荐）
-
 ```bash
 # 下载 AppImage 文件
 chmod +x Claude-Workbench-*.AppImage
@@ -541,14 +501,12 @@ chmod +x Claude-Workbench-*.AppImage
 ```
 
 **方式二：DEB 包** (Debian/Ubuntu)
-
 ```bash
 sudo dpkg -i any-code-*.deb
 sudo apt-get install -f  # 修复依赖
 ```
 
 **方式三：RPM 包** (Fedora/RHEL)
-
 ```bash
 sudo rpm -i any-code-*.rpm
 ```
@@ -578,7 +536,6 @@ npm run tauri:build-fast
 ```
 
 **构建要求**:
-
 - Node.js 18.0+ (推荐 LTS)
 - Rust 1.70+
 - 平台特定工具链（WebView2 Runtime for Windows）
@@ -711,13 +668,12 @@ npm run tauri:build-fast
 ```
 
 **支持的 Gemini 模型**：
-
-| 模型 ID                | 名称                            | 上下文窗口 |
-| ---------------------- | ------------------------------- | ---------- |
-| `gemini-3-pro-preview` | Gemini 3 Pro (Preview)          | 1,000,000  |
-| `gemini-2.5-pro`       | Gemini 2.5 Pro                  | 1,000,000  |
-| `gemini-2.5-flash`     | Gemini 2.5 Flash                | 1,000,000  |
-| `gemini-2.0-flash-exp` | Gemini 2.0 Flash (Experimental) | 1,000,000  |
+| 模型 ID | 名称 | 上下文窗口 |
+|---------|------|-----------|
+| `gemini-3-pro-preview` | Gemini 3 Pro (Preview) | 1,000,000 |
+| `gemini-2.5-pro` | Gemini 2.5 Pro | 1,000,000 |
+| `gemini-2.5-flash` | Gemini 2.5 Flash | 1,000,000 |
+| `gemini-2.0-flash-exp` | Gemini 2.0 Flash (Experimental) | 1,000,000 |
 
 ### 翻译中间件配置
 
@@ -860,19 +816,19 @@ any-code/
 
 ### 核心前端组件
 
-| 组件/模块                   | 位置          | 功能描述                          |
-| --------------------------- | ------------- | --------------------------------- |
-| **AppLayout**               | `layout/`     | 应用主布局和导航                  |
-| **ClaudeCodeSession**       | `components/` | Claude 会话管理核心               |
+| 组件/模块                   | 位置          | 功能描述                   |
+| --------------------------- | ------------- | -------------------------- |
+| **AppLayout**               | `layout/`     | 应用主布局和导航           |
+| **ClaudeCodeSession**       | `components/` | Claude 会话管理核心        |
 | **ExecutionEngineSelector** | `components/` | 引擎切换器（Claude/Codex/Gemini） |
-| **FloatingPromptInput**     | `components/` | 浮动输入框组件                    |
-| **AIMessage / UserMessage** | `message/`    | 消息展示组件                      |
-| **StreamMessageV2**         | `message/`    | 流式消息渲染                      |
-| **ToolCallsGroup**          | `message/`    | 工具调用展示                      |
-| **SubagentMessageGroup**    | `message/`    | 子代理消息组                      |
-| **MCPManager**              | `components/` | MCP 服务器管理                    |
-| **UsageDashboard**          | `components/` | 使用统计仪表板                    |
-| **TranslationSettings**     | `components/` | 翻译配置组件                      |
+| **FloatingPromptInput**     | `components/` | 浮动输入框组件             |
+| **AIMessage / UserMessage** | `message/`    | 消息展示组件               |
+| **StreamMessageV2**         | `message/`    | 流式消息渲染               |
+| **ToolCallsGroup**          | `message/`    | 工具调用展示               |
+| **SubagentMessageGroup**    | `message/`    | 子代理消息组               |
+| **MCPManager**              | `components/` | MCP 服务器管理             |
+| **UsageDashboard**          | `components/` | 使用统计仪表板             |
+| **TranslationSettings**     | `components/` | 翻译配置组件               |
 
 ### 核心 React Hooks
 
@@ -946,29 +902,29 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 
 前端通过 `src/lib/api.ts` 封装了所有 Tauri 命令调用：
 
-| 分类              | 主要接口                                                     | 功能描述               |
-| ----------------- | ------------------------------------------------------------ | ---------------------- |
-| **项目管理**      | `listProjects()`, `getProjectSessions()`, `deleteSession()`  | 项目和会话的 CRUD 操作 |
-| **Claude 执行**   | `executeClaudeCode()`, `continueClaudeCode()`, `resumeClaudeCode()`, `cancelClaudeExecution()` | Claude CLI 调用和控制  |
-| **Codex 执行**    | `executeCodex()`, `resumeCodex()`, `listCodexSessions()`     | OpenAI Codex API 调用  |
+| 分类            | 主要接口                                                     | 功能描述               |
+| --------------- | ------------------------------------------------------------ | ---------------------- |
+| **项目管理**    | `listProjects()`, `getProjectSessions()`, `deleteSession()`  | 项目和会话的 CRUD 操作 |
+| **Claude 执行** | `executeClaudeCode()`, `continueClaudeCode()`, `resumeClaudeCode()`, `cancelClaudeExecution()` | Claude CLI 调用和控制  |
+| **Codex 执行**  | `executeCodex()`, `resumeCodex()`, `listCodexSessions()`     | OpenAI Codex API 调用  |
 | **Gemini 执行** 🆕 | `executeGemini()`, `resumeGemini()`, `cancelGeminiExecution()`, `getGeminiConfig()` | Google Gemini CLI 调用 |
-| **存储管理**      | `storageListTables()`, `storageExecuteSql()`, `storageInsertRow()` | SQLite 数据库操作      |
-| **MCP 管理**      | `mcpAdd()`, `mcpList()`, `mcpTestConnection()`               | MCP 服务器配置和测试   |
-| **翻译服务**      | `translate()`, `getTranslationConfig()`, `clearTranslationCache()` | 翻译中间件接口         |
-| **使用统计**      | `getUsageStats()`, `getUsageByModel()`, `getUsageByProject()` | 成本和 Token 统计      |
-| **上下文管理**    | `compressContext()`, `getCompressionHistory()`               | 自动上下文压缩         |
+| **存储管理**    | `storageListTables()`, `storageExecuteSql()`, `storageInsertRow()` | SQLite 数据库操作      |
+| **MCP 管理**    | `mcpAdd()`, `mcpList()`, `mcpTestConnection()`               | MCP 服务器配置和测试   |
+| **翻译服务**    | `translate()`, `getTranslationConfig()`, `clearTranslationCache()` | 翻译中间件接口         |
+| **使用统计**    | `getUsageStats()`, `getUsageByModel()`, `getUsageByProject()` | 成本和 Token 统计      |
+| **上下文管理**  | `compressContext()`, `getCompressionHistory()`               | 自动上下文压缩         |
 
 ### 架构特点总结
 
-| 特点               | 描述                                                         |
-| ------------------ | ------------------------------------------------------------ |
+| 特点               | 描述                                               |
+| ------------------ | -------------------------------------------------- |
 | **三引擎架构**     | 同时支持 Claude Code、OpenAI Codex 和 Google Gemini，一键切换 |
-| **现代化技术栈**   | Tauri 2.9 + React 18 + Rust 2021，跨平台高性能               |
-| **流式渲染**       | IPC 事件流驱动，实时流式输出 AI 响应                         |
-| **嵌入式存储**     | SQLite WAL 模式，高性能本地数据持久化                        |
-| **翻译中间件**     | 透明的中英文翻译，8 种内容提取策略                           |
-| **自动上下文管理** | 智能监控和压缩，优化 Token 使用                              |
-| **扩展生态**       | MCP 协议支持、Hooks 自动化、插件系统                         |
+| **现代化技术栈**   | Tauri 2.9 + React 18 + Rust 2021，跨平台高性能     |
+| **流式渲染**       | IPC 事件流驱动，实时流式输出 AI 响应               |
+| **嵌入式存储**     | SQLite WAL 模式，高性能本地数据持久化              |
+| **翻译中间件**     | 透明的中英文翻译，8 种内容提取策略                 |
+| **自动上下文管理** | 智能监控和压缩，优化 Token 使用                    |
+| **扩展生态**       | MCP 协议支持、Hooks 自动化、插件系统               |
 
 ---
 
@@ -977,7 +933,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 ### v5.6.6 (2025-12)
 
 #### 🎉 重大更新
-
 - ✨ **Google Gemini 引擎** - 全新的三引擎架构，新增 Gemini CLI 完整支持
   - 支持多种 Gemini 模型：Gemini 3 Pro、Gemini 2.5 Pro/Flash、Gemini 2.0 Flash
   - 三种认证方式：Google OAuth（推荐）、API Key、Vertex AI
@@ -990,14 +945,12 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
   - 引擎特定的配置和优化
 
 #### 🔧 功能增强
-
 - ✅ 新增 Gemini 配置管理界面
 - ✅ 支持 Gemini 供应商预设配置
 - ✅ 增强的会话恢复功能
 - ✅ 改进的实时流 tool_use 处理
 
 #### 🐛 Bug 修复
-
 - 🔧 修复 Gemini delta 消息合并导致 tool_use 分离的问题
 - 🔧 过滤 Gemini CLI stderr 调试消息
 - 🔧 修复实时流 tool_result 内容为空的问题
@@ -1007,7 +960,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 ### v4.4.0 (2025-11-24)
 
 #### 🎉 重大更新
-
 - ✨ **OpenAI Codex 集成** - 双引擎架构，支持 Claude 和 Codex 引擎切换
   - 支持 Full Auto、Danger Full Access、Read-only 三种执行模式
   - JSON 格式流式输出，完整的会话管理
@@ -1025,7 +977,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
   - 可配置的压缩策略
 
 #### 🔧 功能增强
-
 - ✅ 多引擎会话列表统一展示（Claude + Codex）
 - ✅ 引擎特定的图标和标识
 - ✅ 改进的会话生命周期管理
@@ -1034,7 +985,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 - ✅ 统一的错误处理和日志系统
 
 #### 🎨 UI/UX 改进
-
 - ✅ 执行引擎选择器（Claude / Codex）
 - ✅ 会话类型可视化标识
 - ✅ 改进的输入框和工具栏布局
@@ -1042,7 +992,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 - ✅ 优化的响应式设计
 
 #### ⚡ 性能优化
-
 - ✅ 重构的会话加载逻辑，加载速度提升 60%
 - ✅ 优化的翻译缓存机制
 - ✅ 减少不必要的组件重渲染
@@ -1050,7 +999,6 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 - ✅ 数据库查询优化
 
 #### 🐛 Bug 修复
-
 - 🔧 修复子代理消息渲染导致的页面崩溃问题
 - 🔧 修复翻译功能的取消机制
 - 🔧 修复会话切换时的内存泄漏
@@ -1064,19 +1012,15 @@ CREATE INDEX idx_usage_model_timestamp ON usage_entries(model, timestamp DESC);
 <details>
 <summary><b>v4.3.x 更新历史</b></summary>
 
-
 #### v4.3.8 (2025-11-20)
-
 - 修复 AppLayout 中 ThemeToggle 组件的 props 类型错误
 - 修复构建失败问题，确保 CI/CD 正常运行
 
 #### v4.3.7 (2025-11-20)
-
 - 版本号统一更新到 4.3.7
 - 所有平台配置文件同步更新
 
 #### v4.0.1 更新亮点
-
 - Claude 扩展管理器（Plugins/Subagents/Skills）
 - 多模型精确成本计算
 - Git 代码变更统计 API
@@ -1123,7 +1067,6 @@ git push origin feature/your-feature-name
 ### 代码规范
 
 **TypeScript/React**
-
 - 使用 TypeScript 严格模式
 - 遵循 React Hooks 最佳实践
 - 组件使用函数式组件 + Hooks
@@ -1131,7 +1074,6 @@ git push origin feature/your-feature-name
 - 使用 ESLint 和 Prettier 格式化
 
 **Rust**
-
 - 遵循 Rust 2021 Edition 标准
 - 使用 `cargo fmt` 格式化代码
 - 使用 `cargo clippy` 检查代码质量
@@ -1139,7 +1081,6 @@ git push origin feature/your-feature-name
 - 异步代码使用 `tokio`
 
 **提交信息规范**
-
 ```
 <type>(<scope>): <subject>
 
@@ -1149,7 +1090,6 @@ git push origin feature/your-feature-name
 ```
 
 类型:
-
 - `feat`: 新功能
 - `fix`: Bug 修复
 - `docs`: 文档更新
@@ -1162,7 +1102,6 @@ git push origin feature/your-feature-name
 ### 问题报告
 
 提交 Issue 时请包含：
-
 - 详细的问题描述
 - 复现步骤
 - 预期行为 vs 实际行为
@@ -1178,16 +1117,13 @@ git push origin feature/your-feature-name
 <details>
 <summary><b>Q: 应用无法启动或闪退</b></summary>
 
-
 **A**: 检查以下几点：
-
 1. 确认 Claude Code CLI 已正确安装
 2. 检查系统是否安装了必要的运行时（Windows: WebView2 Runtime）
 3. 查看应用日志文件（位置见下方）
 4. 尝试以管理员/root 权限运行
 
 日志位置：
-
 - Windows: `%APPDATA%\any-code\logs`
 - macOS: `~/Library/Application Support/any-code/logs`
 - Linux: `~/.config/any-code/logs`
@@ -1197,9 +1133,7 @@ git push origin feature/your-feature-name
 <details>
 <summary><b>Q: Claude Code CLI 未找到</b></summary>
 
-
 **A**:
-
 1. 确认 Claude Code CLI 已安装: `claude --version`
 2. 在设置中手动指定 Claude CLI 路径
 3. 确保 PATH 环境变量包含 Claude CLI 安装目录
@@ -1209,9 +1143,7 @@ git push origin feature/your-feature-name
 <details>
 <summary><b>Q: 会话无法加载或历史记录丢失</b></summary>
 
-
 **A**:
-
 1. 检查 `~/.claude/projects/` 目录权限
 2. 确认 JSONL 文件没有损坏
 3. 尝试重启应用
@@ -1222,9 +1154,7 @@ git push origin feature/your-feature-name
 <details>
 <summary><b>Q: MCP 服务器连接失败</b></summary>
 
-
 **A**:
-
 1. 确认 MCP 服务器正确安装
 2. 检查配置文件路径和命令是否正确
 3. 测试手动运行 MCP 服务器命令
@@ -1235,9 +1165,7 @@ git push origin feature/your-feature-name
 <details>
 <summary><b>Q: 翻译功能不工作</b></summary>
 
-
 **A**:
-
 1. 在设置中确认翻译中间件已启用
 2. 检查网络连接
 3. 尝试清除翻译缓存
@@ -1252,7 +1180,6 @@ git push origin feature/your-feature-name
 本项目基于 **AGPL-3.0** 开源协议发布。
 
 这意味着：
-
 - ✅ 可以自由使用、修改和分发
 - ✅ 必须开源修改后的代码
 - ✅ 网络服务也需要开源
@@ -1265,7 +1192,6 @@ git push origin feature/your-feature-name
 ## 🔗 相关资源
 
 ### 官方文档
-
 - [Claude Code 官方文档](https://docs.claude.com/en/docs/claude-code/overview)
 - [Anthropic API 文档](https://docs.anthropic.com/)
 - [Anthropic Skills 仓库](https://github.com/anthropics/skills) ⭐ 13.7k
@@ -1273,13 +1199,11 @@ git push origin feature/your-feature-name
 - [Google AI Studio](https://aistudio.google.com/) - Gemini API Key 获取
 
 ### 技术文档
-
 - [Tauri 框架](https://tauri.app/) - 桌面应用框架
 - [React 文档](https://react.dev/) - 前端框架
 - [Rust 官网](https://rust-lang.org/) - 系统编程语言
 
 ### 社区资源
-
 - [MCP 协议规范](https://modelcontextprotocol.io/) - Model Context Protocol
 - [Claude Code GitHub Discussions](https://github.com/anthropics/claude-code/discussions)
 
@@ -1326,7 +1250,6 @@ git push origin feature/your-feature-name
 ---
 
 <div align="center">
-
 
 **Any Code** - 三大 AI 引擎，一个桌面应用
 
