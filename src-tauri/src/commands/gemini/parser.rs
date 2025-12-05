@@ -104,13 +104,19 @@ pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
         }
 
         GeminiStreamEvent::ToolResult { tool_id, status, output, timestamp } => {
+            let output_value = if output.is_null() {
+                Value::Null
+            } else {
+                output.clone()
+            };
+
             json!({
                 "type": "user",
                 "message": {
                     "content": [{
                         "type": "tool_result",
                         "tool_use_id": tool_id,
-                        "content": output,
+                        "content": output_value,
                         "is_error": status != "success"
                     }],
                     "role": "user"
@@ -230,14 +236,12 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
             "tool_result" => {
                 let tool_id = raw.get("tool_id").and_then(|t| t.as_str()).unwrap_or("");
                 let status = raw.get("status").and_then(|s| s.as_str()).unwrap_or("unknown");
-                // output 可能是字符串或对象，灵活处理
-                let output = raw.get("output").map(|o| {
-                    if let Some(s) = o.as_str() {
-                        s.to_string()
-                    } else {
-                        serde_json::to_string(o).unwrap_or_default()
-                    }
-                }).unwrap_or_default();
+                // output 保留原始结构，兼容 functionResponse 等复杂结果
+                let output = raw
+                    .get("output")
+                    .cloned()
+                    .or_else(|| raw.get("response").cloned())
+                    .unwrap_or(Value::Null);
                 return json!({
                     "type": "user",
                     "message": {
@@ -271,6 +275,76 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
             }
             _ => {}
         }
+    }
+
+    // Fallback: detect function calling structures even without standard type field
+    if let Some(func_call) = raw.get("functionCall").or_else(|| raw.get("function_call")) {
+        let tool_name = func_call.get("name").and_then(|n| n.as_str()).unwrap_or("");
+        let tool_id = func_call
+            .get("id")
+            .or_else(|| raw.get("callId"))
+            .or_else(|| raw.get("call_id"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let args = func_call
+            .get("args")
+            .or_else(|| func_call.get("arguments"))
+            .or_else(|| func_call.get("parameters"))
+            .cloned()
+            .unwrap_or(json!({}));
+
+        return json!({
+            "type": "assistant",
+            "message": {
+                "content": [{
+                    "type": "tool_use",
+                    "id": tool_id,
+                    "name": tool_name,
+                    "input": args
+                }],
+                "role": "assistant"
+            },
+            "geminiMetadata": {
+                "provider": "gemini",
+                "eventType": "tool_use",
+                "toolName": tool_name,
+                "toolId": tool_id,
+                "raw": raw
+            }
+        });
+    }
+
+    if let Some(func_resp) = raw.get("functionResponse").or_else(|| raw.get("function_response")) {
+        let tool_id = func_resp
+            .get("id")
+            .or_else(|| raw.get("callId"))
+            .or_else(|| raw.get("call_id"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let tool_name = func_resp.get("name").and_then(|n| n.as_str()).unwrap_or("");
+
+        // 保留完整 functionResponse 结构，前端解析 output 后再渲染
+        let wrapped_content = Value::Array(vec![json!({ "functionResponse": func_resp })]);
+
+        return json!({
+            "type": "user",
+            "message": {
+                "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": tool_id,
+                    "content": wrapped_content,
+                    "is_error": false
+                }],
+                "role": "user"
+            },
+            "geminiMetadata": {
+                "provider": "gemini",
+                "eventType": "tool_result",
+                "toolName": tool_name,
+                "toolId": tool_id,
+                "raw": raw
+            }
+        });
     }
 
     // Fallback: wrap as a system message with raw data

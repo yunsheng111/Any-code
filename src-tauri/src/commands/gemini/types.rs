@@ -4,6 +4,7 @@
 //! including stream events, execution options, and configuration.
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 // ============================================================================
 // Stream Event Types (from --output-format stream-json)
@@ -48,7 +49,7 @@ pub enum GeminiStreamEvent {
     ToolResult {
         tool_id: String,
         status: String,
-        output: String,
+        output: Value,
         timestamp: Option<String>,
     },
 
@@ -92,15 +93,13 @@ impl GeminiStreamEvent {
             "tool_result" => Some(Self::ToolResult {
                 tool_id: value.get("tool_id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
                 status: value.get("status").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                // output 可能是字符串或对象，需要灵活处理
-                output: value.get("output").map(|v| {
-                    if let Some(s) = v.as_str() {
-                        s.to_string()
-                    } else {
-                        // 如果不是字符串，序列化为 JSON
-                        serde_json::to_string(v).unwrap_or_default()
-                    }
-                }).unwrap_or_default(),
+                // output 可能是字符串或对象，需要完整保留结构以便前端渲染（如 functionResponse）
+                output: value
+                    .get("output")
+                    .cloned()
+                    // 一些 Gemini 变体会把结果放在 response 字段
+                    .or_else(|| value.get("response").cloned())
+                    .unwrap_or(Value::Null),
                 timestamp: value.get("timestamp").and_then(|v| v.as_str()).map(String::from),
             }),
             "error" => Some(Self::Error {
