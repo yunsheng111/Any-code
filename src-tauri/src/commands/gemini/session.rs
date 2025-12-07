@@ -83,18 +83,68 @@ pub fn find_gemini_binary() -> Result<String, String> {
         cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
 
-    if let Ok(output) = cmd.output()
-    {
+    if let Ok(output) = cmd.output() {
         if output.status.success() {
-            let path = String::from_utf8_lossy(&output.stdout)
-                .trim()
-                .lines()
-                .next()
-                .unwrap_or("")
-                .to_string();
-            if !path.is_empty() && std::path::Path::new(&path).exists() {
-                log::info!("Found Gemini CLI via {}: {}", which_cmd, path);
-                return Ok(path);
+            let output_str = String::from_utf8_lossy(&output.stdout);
+
+            // On Windows, 'where' may return multiple lines. Prefer paths with executable extensions
+            #[cfg(target_os = "windows")]
+            {
+                let executable_extensions = [".exe", ".cmd", ".bat", ".ps1"];
+
+                // First pass: find paths with executable extensions
+                for line in output_str.lines() {
+                    let path = line.trim();
+                    if path.is_empty() {
+                        continue;
+                    }
+                    if !std::path::Path::new(path).exists() {
+                        continue;
+                    }
+                    let has_exec_ext = executable_extensions
+                        .iter()
+                        .any(|ext| path.to_lowercase().ends_with(ext));
+                    if has_exec_ext {
+                        log::info!("Found Gemini CLI via {}: {}", which_cmd, path);
+                        return Ok(path.to_string());
+                    }
+                }
+
+                // Second pass: try adding extensions to paths without them
+                for line in output_str.lines() {
+                    let path = line.trim();
+                    if path.is_empty() {
+                        continue;
+                    }
+                    let path_buf = std::path::PathBuf::from(path);
+                    if path_buf.extension().is_none() {
+                        for ext in &executable_extensions {
+                            let with_ext = format!("{}{}", path, ext);
+                            if std::path::Path::new(&with_ext).exists() {
+                                log::info!("Found Gemini CLI via {} (resolved extension): {}", which_cmd, with_ext);
+                                return Ok(with_ext);
+                            }
+                        }
+                    }
+                }
+
+                // Last resort: return first existing path
+                for line in output_str.lines() {
+                    let path = line.trim();
+                    if !path.is_empty() && std::path::Path::new(path).exists() {
+                        log::info!("Found Gemini CLI via {}: {}", which_cmd, path);
+                        return Ok(path.to_string());
+                    }
+                }
+            }
+
+            #[cfg(not(target_os = "windows"))]
+            {
+                let path = output_str.trim().lines().next().unwrap_or("").to_string();
+                if !path.is_empty() && std::path::Path::new(&path).exists() {
+                    log::info!("Found Gemini CLI via {}: {}", which_cmd, path);
+                    return Ok(path);
+                }
             }
         }
     }
