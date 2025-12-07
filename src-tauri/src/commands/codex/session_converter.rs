@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 /**
  * Claude ↔ Codex Session 转换模块
  *
@@ -13,12 +14,10 @@
  * - 工具调用名称映射（bash ↔ shell_command 等）
  * - 仅支持已完成的 Session 转换
  */
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
-use once_cell::sync::Lazy;
 
 // ================================
 // 数据结构定义
@@ -303,9 +302,9 @@ pub fn map_claude_to_codex_tool(claude_name: &str) -> String {
 /// Claude Session → Codex Session 转换器
 pub struct ClaudeToCodexConverter {
     source_session_id: String,
-    project_id: String,          // 实际的目录名（如 C--Users-...）
-    project_path: String,        // 原始项目路径
-    new_session_uuid: String,    // 纯 UUID（用于文件内容）
+    project_id: String,           // 实际的目录名（如 C--Users-...）
+    project_path: String,         // 原始项目路径
+    new_session_uuid: String,     // 纯 UUID（用于文件内容）
     new_session_filename: String, // rollout-{uuid}（用于文件名）
 }
 
@@ -335,7 +334,9 @@ impl ClaudeToCodexConverter {
         if let Some(content_value) = content {
             if let Some(text) = content_value.as_str() {
                 // 字符串格式 - 直接转为文本块
-                blocks.push(ClaudeContentBlock::Text { text: text.to_string() });
+                blocks.push(ClaudeContentBlock::Text {
+                    text: text.to_string(),
+                });
             } else if let Some(array) = content_value.as_array() {
                 // 数组格式 - 解析每个块
                 for item in array {
@@ -374,7 +375,9 @@ impl ClaudeToCodexConverter {
                                 }
                             }
                             "thinking" => {
-                                if let Some(thinking) = item.get("thinking").and_then(|t| t.as_str()) {
+                                if let Some(thinking) =
+                                    item.get("thinking").and_then(|t| t.as_str())
+                                {
                                     blocks.push(ClaudeContentBlock::Thinking {
                                         thinking: thinking.to_string(),
                                     });
@@ -500,9 +503,7 @@ impl ClaudeToCodexConverter {
 
         if let Some(last) = messages.last() {
             if last.message_type == "user" {
-                return Err(
-                    "Session appears incomplete (ends with user message)".to_string()
-                );
+                return Err("Session appears incomplete (ends with user message)".to_string());
             }
         }
 
@@ -710,8 +711,7 @@ impl ClaudeToCodexConverter {
         for event in events {
             let line = serde_json::to_string(event)
                 .map_err(|e| format!("Failed to serialize event: {}", e))?;
-            writeln!(file, "{}", line)
-                .map_err(|e| format!("Failed to write event: {}", e))?;
+            writeln!(file, "{}", line).map_err(|e| format!("Failed to write event: {}", e))?;
         }
 
         Ok(file_path.to_string_lossy().to_string())
@@ -725,9 +725,9 @@ impl ClaudeToCodexConverter {
 /// Codex Session → Claude Session 转换器
 pub struct CodexToClaudeConverter {
     source_session_id: String,
-    project_id: String,      // 实际的目录名（如 C--Users-...）
-    project_path: String,    // 原始项目路径
-    new_session_id: String,  // UUID 格式
+    project_id: String,     // 实际的目录名（如 C--Users-...）
+    project_path: String,   // 原始项目路径
+    new_session_id: String, // UUID 格式
 }
 
 impl CodexToClaudeConverter {
@@ -748,32 +748,33 @@ impl CodexToClaudeConverter {
         }
 
         // 统一使用数组格式（与原生 Claude 一致）
-        let array: Vec<Value> = content.iter().filter_map(|block| {
-            match block {
+        let array: Vec<Value> = content
+            .iter()
+            .filter_map(|block| match block {
                 ClaudeContentBlock::Text { text } => {
                     Some(serde_json::json!({"type": "text", "text": text}))
                 }
-                ClaudeContentBlock::ToolUse { id, name, input } => {
-                    Some(serde_json::json!({
-                        "type": "tool_use",
-                        "id": id,
-                        "name": name,
-                        "input": input
-                    }))
-                }
-                ClaudeContentBlock::ToolResult { tool_use_id, content, is_error } => {
-                    Some(serde_json::json!({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_id,
-                        "content": content,
-                        "is_error": is_error
-                    }))
-                }
+                ClaudeContentBlock::ToolUse { id, name, input } => Some(serde_json::json!({
+                    "type": "tool_use",
+                    "id": id,
+                    "name": name,
+                    "input": input
+                })),
+                ClaudeContentBlock::ToolResult {
+                    tool_use_id,
+                    content,
+                    is_error,
+                } => Some(serde_json::json!({
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": content,
+                    "is_error": is_error
+                })),
                 ClaudeContentBlock::Thinking { thinking } => {
                     Some(serde_json::json!({"type": "thinking", "thinking": thinking}))
                 }
-            }
-        }).collect();
+            })
+            .collect();
 
         Some(Value::Array(array))
     }
@@ -804,11 +805,23 @@ impl CodexToClaudeConverter {
             cwd: Some(self.project_path.clone()),
             version: Some("2.0.55".to_string()), // 使用真实版本号，避免被识别为特殊模式
             git_branch: None,
-            user_type: if role == "user" { Some("external".to_string()) } else { None },
+            user_type: if role == "user" {
+                Some("external".to_string())
+            } else {
+                None
+            },
             is_sidechain: Some(false),
             subtype: None,
-            received_at: if role != "user" { Some(timestamp.to_string()) } else { None },
-            sent_at: if role == "user" { Some(timestamp.to_string()) } else { None },
+            received_at: if role != "user" {
+                Some(timestamp.to_string())
+            } else {
+                None
+            },
+            sent_at: if role == "user" {
+                Some(timestamp.to_string())
+            } else {
+                None
+            },
             model,
             conversion_source: None,
             extra: HashMap::new(),
@@ -856,12 +869,18 @@ impl CodexToClaudeConverter {
             conversion_source: None,
             extra: {
                 let mut map = HashMap::new();
-                map.insert("messageId".to_string(), Value::String(snapshot_uuid.clone()));
-                map.insert("snapshot".to_string(), serde_json::json!({
-                    "messageId": snapshot_uuid,
-                    "trackedFileBackups": {},
-                    "timestamp": first_timestamp
-                }));
+                map.insert(
+                    "messageId".to_string(),
+                    Value::String(snapshot_uuid.clone()),
+                );
+                map.insert(
+                    "snapshot".to_string(),
+                    serde_json::json!({
+                        "messageId": snapshot_uuid,
+                        "trackedFileBackups": {},
+                        "timestamp": first_timestamp
+                    }),
+                );
                 map.insert("isSnapshotUpdate".to_string(), Value::Bool(false));
                 map
             },
@@ -905,10 +924,10 @@ impl CodexToClaudeConverter {
             .map_err(|e| format!("Failed to get Codex sessions directory: {}", e))?;
 
         // 使用 codex/session.rs 中的 find_session_file 函数
-        let session_path = super::session::find_session_file(&sessions_dir, &self.source_session_id)
-            .ok_or_else(|| {
-                format!("Codex session file not found: {}", self.source_session_id)
-            })?;
+        let session_path =
+            super::session::find_session_file(&sessions_dir, &self.source_session_id).ok_or_else(
+                || format!("Codex session file not found: {}", self.source_session_id),
+            )?;
 
         let file = std::fs::File::open(&session_path)
             .map_err(|e| format!("Failed to open session file: {}", e))?;
@@ -970,7 +989,8 @@ impl CodexToClaudeConverter {
             session_id: Some(self.new_session_id.clone()),
             cwd: Some(self.project_path.clone()),
             version: Some("2.0.55".to_string()), // 使用真实版本号
-            git_branch: payload.get("git")
+            git_branch: payload
+                .get("git")
                 .and_then(|g| g.get("branch"))
                 .and_then(|b| b.as_str())
                 .map(String::from),
@@ -979,7 +999,10 @@ impl CodexToClaudeConverter {
             subtype: Some("init".to_string()),
             received_at: Some(timestamp.to_string()),
             sent_at: None,
-            model: payload.get("model").and_then(|v| v.as_str()).map(String::from),
+            model: payload
+                .get("model")
+                .and_then(|v| v.as_str())
+                .map(String::from),
             conversion_source: Some(ConversionSource {
                 engine: "codex".to_string(),
                 session_id: self.source_session_id.clone(),
@@ -1007,7 +1030,10 @@ impl CodexToClaudeConverter {
                     .filter_map(|item| {
                         let item_type = item.get("type")?.as_str()?;
                         // Codex 使用 input_text 和 output_text
-                        if item_type == "text" || item_type == "input_text" || item_type == "output_text" {
+                        if item_type == "text"
+                            || item_type == "input_text"
+                            || item_type == "output_text"
+                        {
                             Some(ClaudeContentBlock::Text {
                                 text: item.get("text")?.as_str()?.to_string(),
                             })
@@ -1052,12 +1078,15 @@ impl CodexToClaudeConverter {
             "function_call_output" => {
                 let call_id = payload.get("call_id")?.as_str()?;
                 let output = payload.get("output").and_then(|v| v.as_str()).unwrap_or("");
-                let is_error = payload.get("is_error").and_then(|v| v.as_bool()).unwrap_or(false);
+                let is_error = payload
+                    .get("is_error")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
 
                 // tool_result 必须在 user 消息中！
                 Some(self.create_claude_message(
-                    "user",  // 改为 user！
-                    "user",  // 改为 user！
+                    "user", // 改为 user！
+                    "user", // 改为 user！
                     vec![ClaudeContentBlock::ToolResult {
                         tool_use_id: call_id.to_string(),
                         content: Value::String(output.to_string()),
@@ -1176,8 +1205,7 @@ impl CodexToClaudeConverter {
         for msg in &linked_messages {
             let line = serde_json::to_string(msg)
                 .map_err(|e| format!("Failed to serialize message: {}", e))?;
-            writeln!(file, "{}", line)
-                .map_err(|e| format!("Failed to write message: {}", e))?;
+            writeln!(file, "{}", line).map_err(|e| format!("Failed to write message: {}", e))?;
         }
 
         Ok(file_path.to_string_lossy().to_string())
@@ -1208,7 +1236,10 @@ fn detect_session_engine(session_id: &str, project_id: &str) -> Result<String, S
         }
     }
 
-    Err(format!("Session {} not found in either Claude or Codex directories", session_id))
+    Err(format!(
+        "Session {} not found in either Claude or Codex directories",
+        session_id
+    ))
 }
 
 /// 统一转换接口

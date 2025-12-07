@@ -481,7 +481,9 @@ pub async fn create_subagent(
         .chars()
         .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
     {
-        return Err("Agent name can only contain letters, numbers, hyphens, and underscores".into());
+        return Err(
+            "Agent name can only contain letters, numbers, hyphens, and underscores".into(),
+        );
     }
 
     // Determine target directory based on scope
@@ -489,9 +491,7 @@ pub async fn create_subagent(
         let proj_path = project_path.ok_or("Project path is required for project scope")?;
         Path::new(&proj_path).join(".claude").join("agents")
     } else {
-        get_claude_dir()
-            .map_err(|e| e.to_string())?
-            .join("agents")
+        get_claude_dir().map_err(|e| e.to_string())?.join("agents")
     };
 
     // Create directory if it doesn't exist
@@ -548,7 +548,9 @@ pub async fn create_skill(
         .chars()
         .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
     {
-        return Err("Skill name can only contain letters, numbers, hyphens, and underscores".into());
+        return Err(
+            "Skill name can only contain letters, numbers, hyphens, and underscores".into(),
+        );
     }
 
     // Determine target directory based on scope
@@ -556,9 +558,7 @@ pub async fn create_skill(
         let proj_path = project_path.ok_or("Project path is required for project scope")?;
         Path::new(&proj_path).join(".claude").join("skills")
     } else {
-        get_claude_dir()
-            .map_err(|e| e.to_string())?
-            .join("skills")
+        get_claude_dir().map_err(|e| e.to_string())?.join("skills")
     };
 
     // Create skill subdirectory: .claude/skills/<skill-name>/

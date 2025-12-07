@@ -156,7 +156,10 @@ pub fn init_shell_environment() {
             }
         }
         if !final_paths.is_empty() {
-            info!("Added {} NVM paths with highest priority", final_paths.len());
+            info!(
+                "Added {} NVM paths with highest priority",
+                final_paths.len()
+            );
         }
     }
 
@@ -500,7 +503,10 @@ fn push_candidate(
     // 执行一次版本探测，失败也允许继续，只是 version 为 None
     let version = get_binary_version_generic(&path);
     if !looks_like_path && version.is_none() {
-        debug!("Skip candidate {} because version probe failed and no concrete path", path);
+        debug!(
+            "Skip candidate {} because version probe failed and no concrete path",
+            path
+        );
         return;
     }
 
@@ -530,7 +536,13 @@ fn collect_runtime_candidates(
     if let Ok(val) = std::env::var(env_var) {
         if !val.trim().is_empty() {
             info!("Using {} from env var {}", tool, env_var);
-            push_candidate(&mut candidates, &mut seen, val, &format!("env:{}", env_var), 0);
+            push_candidate(
+                &mut candidates,
+                &mut seen,
+                val,
+                &format!("env:{}", env_var),
+                0,
+            );
         }
     }
 
@@ -619,7 +631,10 @@ fn collect_runtime_candidates(
                     format!("{}/.asdf/shims", home),
                     format!("{}/.fnm/aliases/default/bin", home),
                     format!("{}/.local/share/fnm/aliases/default/bin", home),
-                    format!("{}/Library/Application Support/fnm/aliases/default/bin", home),
+                    format!(
+                        "{}/Library/Application Support/fnm/aliases/default/bin",
+                        home
+                    ),
                     format!("{}/.nvm/current/bin", home),
                     format!("{}/.pnpm-global/bin", home),
                     format!("{}/bin", home),
@@ -701,14 +716,14 @@ fn select_best_with_priority(
     mut installations: Vec<PrioritizedInstallation>,
 ) -> Option<ClaudeInstallation> {
     installations.sort_by(|a, b| {
-        a.priority
-            .cmp(&b.priority)
-            .then_with(|| match (&a.installation.version, &b.installation.version) {
+        a.priority.cmp(&b.priority).then_with(|| {
+            match (&a.installation.version, &b.installation.version) {
                 (Some(v1), Some(v2)) => compare_versions(v2, v1),
                 (Some(_), None) => Ordering::Less,
                 (None, Some(_)) => Ordering::Greater,
                 _ => Ordering::Equal,
-            })
+            }
+        })
     });
 
     installations.into_iter().map(|p| p.installation).next()
@@ -744,7 +759,11 @@ fn get_tool_aliases(tool: &str, env: &RuntimeEnvironment) -> Vec<String> {
 
 /// 在 PATH 中解析命令实际路径
 fn resolve_command_in_path(command: &str, env: &RuntimeEnvironment) -> Option<String> {
-    let lookup_cmd = if env.os == "windows" { "where" } else { "which" };
+    let lookup_cmd = if env.os == "windows" {
+        "where"
+    } else {
+        "which"
+    };
     let mut cmd = Command::new(lookup_cmd);
     cmd.arg(command);
 
@@ -832,8 +851,14 @@ fn resolve_command_in_path(command: &str, env: &RuntimeEnvironment) -> Option<St
 fn query_registry_paths(tool: &str) -> Vec<String> {
     let mut results = Vec::new();
     let keys = [
-        format!(r"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{}", tool),
-        format!(r"HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{}", tool),
+        format!(
+            r"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{}",
+            tool
+        ),
+        format!(
+            r"HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\{}",
+            tool
+        ),
     ];
 
     for key in keys {
@@ -961,7 +986,8 @@ pub fn find_claude_binary(app_handle: &tauri::AppHandle) -> Result<String, Strin
     let user_section = pick_section(&user_cfg, "claude");
 
     // 新的运行时候选收集（支持 env/注册表/常见路径/用户路径）
-    let mut prioritized = collect_runtime_candidates("claude", "CLAUDE_PATH", &runtime_env, user_section);
+    let mut prioritized =
+        collect_runtime_candidates("claude", "CLAUDE_PATH", &runtime_env, user_section);
 
     // 兼容旧逻辑：补充 discover_system_installations 结果，优先级稍低
     let legacy = discover_system_installations()
@@ -984,10 +1010,7 @@ pub fn find_claude_binary(app_handle: &tauri::AppHandle) -> Result<String, Strin
 
     if let Some(best) = select_best_with_priority(prioritized) {
         info!("========================================");
-        info!(
-            "✅ Selected Claude CLI: {}",
-            best.path
-        );
+        info!("✅ Selected Claude CLI: {}", best.path);
         info!(
             "   Version: {:?}",
             best.version.as_deref().unwrap_or("unknown")
@@ -1391,10 +1414,7 @@ fn find_nvm_installations() -> Vec<ClaudeInstallation> {
                     let path_str = claude_path.to_string_lossy().to_string();
                     let node_version = entry.file_name().to_string_lossy().to_string();
 
-                    info!(
-                        "Found Claude in NVM node {}: {}",
-                        node_version, path_str
-                    );
+                    info!("Found Claude in NVM node {}: {}", node_version, path_str);
 
                     // Get Claude version
                     let version = get_claude_version(&path_str).ok().flatten();
@@ -1408,10 +1428,7 @@ fn find_nvm_installations() -> Vec<ClaudeInstallation> {
 
                     // 记录版本信息
                     if let Some(v) = &version {
-                        info!(
-                            "  -> Claude version: {} (Node {})",
-                            v, node_version
-                        );
+                        info!("  -> Claude version: {} (Node {})", v, node_version);
                     }
 
                     break; // Only add one per node version
@@ -1699,7 +1716,10 @@ fn find_macos_installations() -> Vec<ClaudeInstallation> {
                 "fnm-local".to_string(),
             ),
             (
-                format!("{}/Library/Application Support/fnm/aliases/default/bin/claude", home),
+                format!(
+                    "{}/Library/Application Support/fnm/aliases/default/bin/claude",
+                    home
+                ),
                 "fnm-app-support".to_string(),
             ),
             // nvm current symlink (points to currently active node version)
@@ -1749,7 +1769,8 @@ fn find_macos_installations() -> Vec<ClaudeInstallation> {
             if let Ok(entries) = std::fs::read_dir(fnm_base) {
                 for entry in entries.flatten() {
                     if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                        let claude_path = entry.path().join("installation").join("bin").join("claude");
+                        let claude_path =
+                            entry.path().join("installation").join("bin").join("claude");
                         if claude_path.exists() {
                             let node_version = entry.file_name().to_string_lossy().to_string();
                             paths_to_check.push((
@@ -1905,10 +1926,7 @@ fn select_best_installation(installations: Vec<ClaudeInstallation>) -> Option<Cl
             // If both have versions, compare them semantically.
             (Some(v1), Some(v2)) => {
                 let result = compare_versions(v1, v2);
-                debug!(
-                    "Comparing versions: {} vs {} -> {:?}",
-                    v1, v2, result
-                );
+                debug!("Comparing versions: {} vs {} -> {:?}", v1, v2, result);
                 result
             }
             // Prefer the entry that actually has version information.
@@ -2009,7 +2027,8 @@ fn resolve_cmd_wrapper(cmd_path: &str) -> Option<(String, String)> {
 
                     // Convert %~dp0 to absolute path
                     if let Some(parent) = std::path::Path::new(cmd_path).parent() {
-                        let script_path = parent.join(script_relative).to_string_lossy().to_string();
+                        let script_path =
+                            parent.join(script_relative).to_string_lossy().to_string();
 
                         // Verify the script exists
                         if PathBuf::from(&script_path).exists() {
@@ -2078,7 +2097,10 @@ pub fn create_command_with_env(program: &str) -> Command {
     let (final_program, extra_args) = {
         if program.ends_with(".cmd") {
             if let Some((node_path, script_path)) = resolve_cmd_wrapper(program) {
-                info!("Resolved .cmd wrapper {} to Node.js script: {}", program, script_path);
+                info!(
+                    "Resolved .cmd wrapper {} to Node.js script: {}",
+                    program, script_path
+                );
                 (node_path, vec![script_path])
             } else {
                 (program.to_string(), vec![])
@@ -2157,7 +2179,10 @@ pub fn create_command_with_env(program: &str) -> Command {
             if let Ok(content) = std::fs::read_to_string(&settings_path) {
                 if let Ok(settings) = serde_json::from_str::<serde_json::Value>(&content) {
                     if let Some(env_obj) = settings.get("env").and_then(|v| v.as_object()) {
-                        info!("Loading {} custom environment variables from settings.json", env_obj.len());
+                        info!(
+                            "Loading {} custom environment variables from settings.json",
+                            env_obj.len()
+                        );
                         for (key, value) in env_obj {
                             if let Some(value_str) = value.as_str() {
                                 info!("Setting custom env var: {}={}", key, value_str);

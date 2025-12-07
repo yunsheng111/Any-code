@@ -293,11 +293,7 @@ pub async fn switch_provider_config(
     // 智能规范化 base_url（支持用户输入简化的基础 URL）
     // 提取纯净的基础 URL，移除可能存在的端点后缀
     let normalized_base = normalize_base_url(&config.base_url);
-    log::info!(
-        "URL 规范化: '{}' -> '{}'",
-        config.base_url,
-        normalized_base
-    );
+    log::info!("URL 规范化: '{}' -> '{}'", config.base_url, normalized_base);
 
     // 设置新的环境变量
     env_obj.insert(
@@ -496,7 +492,10 @@ pub struct ApiKeyUsage {
 /// 查询 API Key 用量
 /// 调用 New API 的 billing 接口获取余额和使用情况
 #[command]
-pub async fn query_provider_usage(base_url: String, api_key: String) -> Result<ApiKeyUsage, String> {
+pub async fn query_provider_usage(
+    base_url: String,
+    api_key: String,
+) -> Result<ApiKeyUsage, String> {
     use reqwest::Client;
 
     log::info!("开始查询 API Key 用量: {}", base_url);

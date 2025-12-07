@@ -104,8 +104,7 @@ pub fn load_gemini_config() -> Result<GeminiConfig, String> {
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("Failed to read Gemini config: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse Gemini config: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse Gemini config: {}", e))
 }
 
 /// Save Gemini configuration to file
@@ -121,8 +120,7 @@ pub fn save_gemini_config(config: &GeminiConfig) -> Result<(), String> {
     let content = serde_json::to_string_pretty(config)
         .map_err(|e| format!("Failed to serialize Gemini config: {}", e))?;
 
-    fs::write(&config_path, content)
-        .map_err(|e| format!("Failed to write Gemini config: {}", e))
+    fs::write(&config_path, content).map_err(|e| format!("Failed to write Gemini config: {}", e))
 }
 
 // ============================================================================
@@ -223,8 +221,8 @@ pub fn build_gemini_env(config: &GeminiConfig) -> std::collections::HashMap<Stri
 // Session History Functions
 // ============================================================================
 
-use sha2::{Sha256, Digest};
-use crate::commands::gemini::types::{GeminiSessionLog, GeminiSessionDetail, GeminiSessionInfo};
+use crate::commands::gemini::types::{GeminiSessionDetail, GeminiSessionInfo, GeminiSessionLog};
+use sha2::{Digest, Sha256};
 
 /// Generate SHA256 hash for project path (matching Gemini CLI behavior)
 pub fn hash_project_path(project_path: &str) -> String {
@@ -249,11 +247,10 @@ pub fn read_session_logs(project_path: &str) -> Result<Vec<GeminiSessionLog>, St
         return Ok(Vec::new());
     }
 
-    let content = fs::read_to_string(&logs_path)
-        .map_err(|e| format!("Failed to read logs.json: {}", e))?;
+    let content =
+        fs::read_to_string(&logs_path).map_err(|e| format!("Failed to read logs.json: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse logs.json: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse logs.json: {}", e))
 }
 
 /// List all session files in chats/ directory
@@ -265,8 +262,8 @@ pub fn list_session_files(project_path: &str) -> Result<Vec<GeminiSessionInfo>, 
         return Ok(Vec::new());
     }
 
-    let entries = fs::read_dir(&chats_dir)
-        .map_err(|e| format!("Failed to read chats directory: {}", e))?;
+    let entries =
+        fs::read_dir(&chats_dir).map_err(|e| format!("Failed to read chats directory: {}", e))?;
 
     let mut sessions = Vec::new();
 
@@ -283,7 +280,9 @@ pub fn list_session_files(project_path: &str) -> Result<Vec<GeminiSessionInfo>, 
 
             // Try to read basic info from file
             if let Ok(detail) = read_session_detail_from_path(&path) {
-                let first_message = detail.messages.first()
+                let first_message = detail
+                    .messages
+                    .first()
                     .and_then(|m| m.get("content"))
                     .and_then(|c| c.as_str())
                     .map(|s| s.to_string());
@@ -312,7 +311,10 @@ pub fn list_session_files(project_path: &str) -> Result<Vec<GeminiSessionInfo>, 
 }
 
 /// Read a complete session detail from chats/session-*.json
-pub fn read_session_detail(project_path: &str, session_id: &str) -> Result<GeminiSessionDetail, String> {
+pub fn read_session_detail(
+    project_path: &str,
+    session_id: &str,
+) -> Result<GeminiSessionDetail, String> {
     let session_dir = get_project_session_dir(project_path)?;
     let chats_dir = session_dir.join("chats");
 
@@ -321,8 +323,8 @@ pub fn read_session_detail(project_path: &str, session_id: &str) -> Result<Gemin
     }
 
     // Find session file by session_id
-    let entries = fs::read_dir(&chats_dir)
-        .map_err(|e| format!("Failed to read chats directory: {}", e))?;
+    let entries =
+        fs::read_dir(&chats_dir).map_err(|e| format!("Failed to read chats directory: {}", e))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
@@ -342,11 +344,10 @@ pub fn read_session_detail(project_path: &str, session_id: &str) -> Result<Gemin
 
 /// Helper function to read session detail from a specific file path
 fn read_session_detail_from_path(path: &PathBuf) -> Result<GeminiSessionDetail, String> {
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read session file: {}", e))?;
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read session file: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse session file: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse session file: {}", e))
 }
 
 // ============================================================================
@@ -355,7 +356,9 @@ fn read_session_detail_from_path(path: &PathBuf) -> Result<GeminiSessionDetail, 
 
 /// Get session logs for a project
 #[tauri::command]
-pub async fn get_gemini_session_logs(project_path: String) -> Result<Vec<GeminiSessionLog>, String> {
+pub async fn get_gemini_session_logs(
+    project_path: String,
+) -> Result<Vec<GeminiSessionLog>, String> {
     read_session_logs(&project_path)
 }
 
@@ -376,10 +379,7 @@ pub async fn get_gemini_session_detail(
 
 /// Delete a Gemini session
 #[tauri::command]
-pub async fn delete_gemini_session(
-    project_path: String,
-    session_id: String,
-) -> Result<(), String> {
+pub async fn delete_gemini_session(project_path: String, session_id: String) -> Result<(), String> {
     delete_session(&project_path, &session_id)
 }
 
@@ -415,9 +415,7 @@ pub async fn save_gemini_system_prompt(content: String) -> Result<String, String
 
     // Ensure directory exists
     if !gemini_dir.exists() {
-        fs::create_dir_all(&gemini_dir).map_err(|e| {
-            format!("创建 ~/.gemini 目录失败: {}", e)
-        })?;
+        fs::create_dir_all(&gemini_dir).map_err(|e| format!("创建 ~/.gemini 目录失败: {}", e))?;
     }
 
     let gemini_md_path = gemini_dir.join("GEMINI.md");
@@ -440,8 +438,8 @@ pub fn delete_session(project_path: &str, session_id: &str) -> Result<(), String
     }
 
     // Find and delete session file by session_id
-    let entries = fs::read_dir(&chats_dir)
-        .map_err(|e| format!("Failed to read chats directory: {}", e))?;
+    let entries =
+        fs::read_dir(&chats_dir).map_err(|e| format!("Failed to read chats directory: {}", e))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;

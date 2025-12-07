@@ -9,7 +9,6 @@
  * - git_ops.rs: Git operations for rewind functionality (records, truncate, revert)
  * - config.rs: Configuration management (availability, paths, mode, providers)
  */
-
 pub mod config;
 pub mod git_ops;
 pub mod session;
@@ -21,50 +20,27 @@ pub mod session_converter;
 
 // Session types
 #[allow(unused_imports)]
-pub use session::{
-    CodexExecutionMode,
-    CodexExecutionOptions,
-    CodexSession,
-    CodexProcessState,
-};
+pub use session::{CodexExecutionMode, CodexExecutionOptions, CodexProcessState, CodexSession};
 
 // Git operations types
 #[allow(unused_imports)]
-pub use git_ops::{
-    CodexPromptRecord,
-    CodexPromptGitRecord,
-    CodexGitRecords,
-    PromptRecord,
-};
+pub use git_ops::{CodexGitRecords, CodexPromptGitRecord, CodexPromptRecord, PromptRecord};
 
 // Config types
 #[allow(unused_imports)]
-pub use config::{
-    CodexAvailability,
-    CodexModeInfo,
-    CodexProviderConfig,
-    CurrentCodexConfig,
-};
+pub use config::{CodexAvailability, CodexModeInfo, CodexProviderConfig, CurrentCodexConfig};
 
 // Session converter types
 #[allow(unused_imports)]
-pub use session_converter::{
-    ConversionSource,
-    ConversionResult,
-};
+pub use session_converter::{ConversionResult, ConversionSource};
 
 // ============================================================================
 // Re-export Tauri Commands - Session Management
 // ============================================================================
 
 pub use session::{
-    execute_codex,
-    resume_codex,
-    resume_last_codex,
-    cancel_codex,
-    list_codex_sessions,
-    load_codex_session_history,
-    delete_codex_session,
+    cancel_codex, delete_codex_session, execute_codex, list_codex_sessions,
+    load_codex_session_history, resume_codex, resume_last_codex,
 };
 
 // ============================================================================
@@ -72,11 +48,8 @@ pub use session::{
 // ============================================================================
 
 pub use git_ops::{
-    get_codex_prompt_list,
-    check_codex_rewind_capabilities,
-    record_codex_prompt_sent,
-    record_codex_prompt_completed,
-    revert_codex_to_prompt,
+    check_codex_rewind_capabilities, get_codex_prompt_list, record_codex_prompt_completed,
+    record_codex_prompt_sent, revert_codex_to_prompt,
 };
 
 // ============================================================================
@@ -84,12 +57,8 @@ pub use git_ops::{
 // ============================================================================
 
 pub use config::{
-    check_codex_availability,
-    set_custom_codex_path,
-    get_codex_path,
-    clear_custom_codex_path,
-    get_codex_mode_config,
-    set_codex_mode_config,
+    check_codex_availability, clear_custom_codex_path, get_codex_mode_config, get_codex_path,
+    set_codex_mode_config, set_custom_codex_path, validate_codex_path_cmd,
 };
 
 // ============================================================================
@@ -97,48 +66,29 @@ pub use config::{
 // ============================================================================
 
 pub use config::{
-    get_codex_provider_presets,
-    get_current_codex_config,
-    switch_codex_provider,
-    add_codex_provider_config,
-    update_codex_provider_config,
-    delete_codex_provider_config,
-    clear_codex_provider_config,
-    test_codex_provider_connection,
+    add_codex_provider_config, clear_codex_provider_config, delete_codex_provider_config,
+    get_codex_provider_presets, get_current_codex_config, switch_codex_provider,
+    test_codex_provider_connection, update_codex_provider_config,
 };
 
 // ============================================================================
 // Re-export Tauri Commands - Session Conversion
 // ============================================================================
 
-pub use session_converter::{
-    convert_session,
-    convert_claude_to_codex,
-    convert_codex_to_claude,
-};
+pub use session_converter::{convert_claude_to_codex, convert_codex_to_claude, convert_session};
 
 // ============================================================================
 // Re-export Helper Functions (for internal use by submodules)
 // ============================================================================
 
 #[allow(unused_imports)]
-pub use config::{
-    get_codex_sessions_dir,
-    get_codex_command_candidates,
-};
+pub use config::{get_codex_command_candidates, get_codex_sessions_dir};
 
 #[allow(unused_imports)]
-pub use session::{
-    find_session_file,
-    parse_codex_session_file,
-};
+pub use session::{find_session_file, parse_codex_session_file};
 
 #[allow(unused_imports)]
 pub use git_ops::{
-    get_codex_git_records_dir,
-    load_codex_git_records,
-    save_codex_git_records,
-    truncate_codex_git_records,
-    extract_codex_prompts,
-    truncate_codex_session_to_prompt,
+    extract_codex_prompts, get_codex_git_records_dir, load_codex_git_records,
+    save_codex_git_records, truncate_codex_git_records, truncate_codex_session_to_prompt,
 };

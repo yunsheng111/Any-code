@@ -1,12 +1,11 @@
+use serde::{Deserialize, Serialize};
 /**
  * Window Management Commands
  *
  * Provides commands for creating and managing independent session windows.
  * Supports detaching tabs into separate windows and cross-window communication.
  */
-
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
-use serde::{Deserialize, Serialize};
 
 /// Parameters for creating a new session window
 #[derive(Debug, Deserialize)]
@@ -52,7 +51,9 @@ pub async fn create_session_window(
     if app.get_webview_window(&window_label).is_some() {
         // Focus existing window instead of creating a new one
         if let Some(window) = app.get_webview_window(&window_label) {
-            window.set_focus().map_err(|e| format!("Failed to focus window: {}", e))?;
+            window
+                .set_focus()
+                .map_err(|e| format!("Failed to focus window: {}", e))?;
         }
         return Ok(WindowCreationResult {
             window_label,
@@ -83,30 +84,35 @@ pub async fn create_session_window(
 
     url = format!("{}?{}", url, query_parts.join("&"));
 
-    log::info!("[Window] Creating session window: {} with URL: {}", window_label, url);
+    log::info!(
+        "[Window] Creating session window: {} with URL: {}",
+        window_label,
+        url
+    );
 
     // Create new window (frameless with custom title bar)
-    let window = WebviewWindowBuilder::new(
-        &app,
-        &window_label,
-        WebviewUrl::App(url.into()),
-    )
-    .title(&params.title)
-    .inner_size(1000.0, 700.0)
-    .min_inner_size(600.0, 400.0)
-    .resizable(true)
-    .maximizable(true)
-    .minimizable(true)
-    .visible(true)
-    .decorations(false)  // Disable system title bar, use custom title bar in frontend
-    .center()
-    .build()
-    .map_err(|e| format!("Failed to create window: {}", e))?;
+    let window = WebviewWindowBuilder::new(&app, &window_label, WebviewUrl::App(url.into()))
+        .title(&params.title)
+        .inner_size(1000.0, 700.0)
+        .min_inner_size(600.0, 400.0)
+        .resizable(true)
+        .maximizable(true)
+        .minimizable(true)
+        .visible(true)
+        .decorations(false) // Disable system title bar, use custom title bar in frontend
+        .center()
+        .build()
+        .map_err(|e| format!("Failed to create window: {}", e))?;
 
     // Focus the new window
-    window.set_focus().map_err(|e| format!("Failed to focus new window: {}", e))?;
+    window
+        .set_focus()
+        .map_err(|e| format!("Failed to focus new window: {}", e))?;
 
-    log::info!("[Window] Session window created successfully: {}", window_label);
+    log::info!(
+        "[Window] Session window created successfully: {}",
+        window_label
+    );
 
     Ok(WindowCreationResult {
         window_label,
@@ -123,12 +129,11 @@ pub async fn create_session_window(
 /// # Returns
 /// * `Result<(), String>` - Success or error message
 #[tauri::command]
-pub async fn close_session_window(
-    app: AppHandle,
-    window_label: String,
-) -> Result<(), String> {
+pub async fn close_session_window(app: AppHandle, window_label: String) -> Result<(), String> {
     if let Some(window) = app.get_webview_window(&window_label) {
-        window.close().map_err(|e| format!("Failed to close window: {}", e))?;
+        window
+            .close()
+            .map_err(|e| format!("Failed to close window: {}", e))?;
         log::info!("[Window] Session window closed: {}", window_label);
         Ok(())
     } else {
@@ -144,9 +149,7 @@ pub async fn close_session_window(
 /// # Returns
 /// * `Result<Vec<String>, String>` - List of window labels
 #[tauri::command]
-pub async fn list_session_windows(
-    app: AppHandle,
-) -> Result<Vec<String>, String> {
+pub async fn list_session_windows(app: AppHandle) -> Result<Vec<String>, String> {
     let windows: Vec<String> = app
         .webview_windows()
         .keys()
@@ -166,12 +169,11 @@ pub async fn list_session_windows(
 /// # Returns
 /// * `Result<(), String>` - Success or error message
 #[tauri::command]
-pub async fn focus_session_window(
-    app: AppHandle,
-    window_label: String,
-) -> Result<(), String> {
+pub async fn focus_session_window(app: AppHandle, window_label: String) -> Result<(), String> {
     if let Some(window) = app.get_webview_window(&window_label) {
-        window.set_focus().map_err(|e| format!("Failed to focus window: {}", e))?;
+        window
+            .set_focus()
+            .map_err(|e| format!("Failed to focus window: {}", e))?;
         Ok(())
     } else {
         Err(format!("Window not found: {}", window_label))

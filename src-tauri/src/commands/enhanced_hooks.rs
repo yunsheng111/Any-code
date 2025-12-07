@@ -139,21 +139,21 @@ impl HookExecutor {
         let max_retries = hook.retry.unwrap_or(0);
 
         loop {
-        let mut cmd = Command::new("bash");
-        cmd.arg("-c")
-            .arg(&hook.command)
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .env("HOOK_CONTEXT", &context_json)
-            .env("HOOK_EVENT", &context.event)
-            .env("SESSION_ID", &context.session_id)
-            .env("PROJECT_PATH", &context.project_path);
+            let mut cmd = Command::new("bash");
+            cmd.arg("-c")
+                .arg(&hook.command)
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .env("HOOK_CONTEXT", &context_json)
+                .env("HOOK_EVENT", &context.event)
+                .env("SESSION_ID", &context.session_id)
+                .env("PROJECT_PATH", &context.project_path);
 
-        #[cfg(target_os = "windows")]
-        {
-            cmd.creation_flags(0x08000000);
-        }
+            #[cfg(target_os = "windows")]
+            {
+                cmd.creation_flags(0x08000000);
+            }
 
             // 设置超时
             let timeout_duration = tokio::time::Duration::from_secs(hook.timeout.unwrap_or(30));

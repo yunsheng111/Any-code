@@ -639,7 +639,6 @@ impl ProcessRegistry {
             }
         }
 
-
         // Then remove them from the registry
         {
             let mut processes = processes_lock.lock().map_err(|e| e.to_string())?;

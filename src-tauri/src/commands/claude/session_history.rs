@@ -10,7 +10,9 @@ use super::models::JsonlEntry;
 use super::paths::get_claude_dir;
 
 /// Extracts the first valid user message from a JSONL file
-pub fn extract_first_user_message<P: AsRef<Path>>(jsonl_path: P) -> (Option<String>, Option<String>) {
+pub fn extract_first_user_message<P: AsRef<Path>>(
+    jsonl_path: P,
+) -> (Option<String>, Option<String>) {
     let file = match fs::File::open(jsonl_path) {
         Ok(file) => file,
         Err(_) => return (None, None),
@@ -35,9 +37,13 @@ pub fn extract_first_user_message<P: AsRef<Path>>(jsonl_path: P) -> (Option<Stri
                             } else if let Some(arr) = content_value.as_array() {
                                 // 数组格式（可能包含 text 和 tool_result）
                                 for item in arr {
-                                    if let Some(item_type) = item.get("type").and_then(|t| t.as_str()) {
+                                    if let Some(item_type) =
+                                        item.get("type").and_then(|t| t.as_str())
+                                    {
                                         if item_type == "text" {
-                                            if let Some(text) = item.get("text").and_then(|t| t.as_str()) {
+                                            if let Some(text) =
+                                                item.get("text").and_then(|t| t.as_str())
+                                            {
                                                 extracted_text.push_str(text);
                                                 has_text_content = true;
                                             }
@@ -158,8 +164,8 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
     }
 
     // Get file modification time as base timestamp
-    let file_metadata = fs::metadata(&session_path)
-        .map_err(|e| format!("Failed to read file metadata: {}", e))?;
+    let file_metadata =
+        fs::metadata(&session_path).map_err(|e| format!("Failed to read file metadata: {}", e))?;
     let base_time = file_metadata
         .modified()
         .unwrap_or_else(|_| SystemTime::now());
@@ -171,22 +177,34 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
     let mut messages = Vec::new();
 
     // Step 1: Load main session messages and build agentId -> tool_use_id mapping
-    let mut agent_to_tool_use_id: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    let mut agent_to_tool_use_id: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
 
     for line in reader.lines() {
         if let Ok(line) = line {
             if let Ok(json) = serde_json::from_str::<Value>(&line) {
                 // Check for tool_result with agentId to build mapping
-                if let Some(content) = json.get("message").and_then(|m| m.get("content")).and_then(|c| c.as_array()) {
+                if let Some(content) = json
+                    .get("message")
+                    .and_then(|m| m.get("content"))
+                    .and_then(|c| c.as_array())
+                {
                     for item in content {
                         if item.get("type").and_then(|t| t.as_str()) == Some("tool_result") {
                             // Get tool_use_id and agentId from toolUseResult
                             if let (Some(tool_use_id), Some(agent_id)) = (
                                 item.get("tool_use_id").and_then(|t| t.as_str()),
-                                json.get("toolUseResult").and_then(|r| r.get("agentId")).and_then(|a| a.as_str())
+                                json.get("toolUseResult")
+                                    .and_then(|r| r.get("agentId"))
+                                    .and_then(|a| a.as_str()),
                             ) {
-                                log::debug!("Found agentId mapping: {} -> {}", agent_id, tool_use_id);
-                                agent_to_tool_use_id.insert(agent_id.to_string(), tool_use_id.to_string());
+                                log::debug!(
+                                    "Found agentId mapping: {} -> {}",
+                                    agent_id,
+                                    tool_use_id
+                                );
+                                agent_to_tool_use_id
+                                    .insert(agent_id.to_string(), tool_use_id.to_string());
                             }
                         }
                     }
@@ -196,7 +214,10 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
         }
     }
 
-    log::info!("Found {} agent-to-tool_use_id mappings", agent_to_tool_use_id.len());
+    log::info!(
+        "Found {} agent-to-tool_use_id mappings",
+        agent_to_tool_use_id.len()
+    );
 
     // Step 2: Load subagent messages from agent-*.jsonl files
     if !agent_to_tool_use_id.is_empty() {
@@ -214,7 +235,11 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
 
                         // Check if this agent belongs to our session
                         if let Some(tool_use_id) = agent_to_tool_use_id.get(agent_id) {
-                            log::info!("Loading subagent file: {} for tool_use_id: {}", file_name, tool_use_id);
+                            log::info!(
+                                "Loading subagent file: {} for tool_use_id: {}",
+                                file_name,
+                                tool_use_id
+                            );
 
                             // Load subagent messages
                             if let Ok(file) = fs::File::open(&path) {
@@ -223,10 +248,12 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
                                     if let Ok(line) = line {
                                         if let Ok(mut json) = serde_json::from_str::<Value>(&line) {
                                             // Verify this subagent belongs to our session
-                                            let subagent_session_id = json.get("sessionId").and_then(|s| s.as_str());
+                                            let subagent_session_id =
+                                                json.get("sessionId").and_then(|s| s.as_str());
                                             if subagent_session_id == Some(session_id) {
                                                 // Add parent_tool_use_id to link subagent messages to Task
-                                                json["parent_tool_use_id"] = Value::String(tool_use_id.clone());
+                                                json["parent_tool_use_id"] =
+                                                    Value::String(tool_use_id.clone());
                                                 messages.push(json);
                                             }
                                         }
@@ -278,6 +305,9 @@ pub fn load_session_history(session_id: &str, project_id: &str) -> Result<Vec<Va
         }
     }
 
-    log::info!("Loaded {} total messages (including subagent messages)", messages.len());
+    log::info!(
+        "Loaded {} total messages (including subagent messages)",
+        messages.len()
+    );
     Ok(messages)
 }

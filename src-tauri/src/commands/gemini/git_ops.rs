@@ -1,3 +1,4 @@
+use chrono::Utc;
 /**
  * Gemini Git Operations Module
  *
@@ -7,16 +8,16 @@
  * - Rewind capabilities checking
  * - Session truncation and revert operations
  */
-
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::fs;
-use chrono::Utc;
+use std::path::PathBuf;
 
 // Import simple_git for rewind operations
 use super::super::simple_git;
 // Import rewind helpers/types shared with Claude
-use super::super::prompt_tracker::{RewindMode, RewindCapabilities, PromptRecord as ClaudePromptRecord, load_execution_config};
+use super::super::prompt_tracker::{
+    load_execution_config, PromptRecord as ClaudePromptRecord, RewindCapabilities, RewindMode,
+};
 // Import Gemini config helpers
 use super::config::get_gemini_dir;
 
@@ -88,7 +89,11 @@ fn find_gemini_session_file(sessions_dir: &PathBuf, session_id: &str) -> Result<
         session_id
     };
 
-    log::debug!("[Gemini] Searching for session file with prefix: {} in {:?}", session_prefix, sessions_dir);
+    log::debug!(
+        "[Gemini] Searching for session file with prefix: {} in {:?}",
+        session_prefix,
+        sessions_dir
+    );
 
     let entries = fs::read_dir(sessions_dir)
         .map_err(|e| format!("Failed to read sessions directory: {}", e))?;
@@ -107,7 +112,11 @@ fn find_gemini_session_file(sessions_dir: &PathBuf, session_id: &str) -> Result<
         }
     }
 
-    log::debug!("[Gemini] Found {} candidate files for prefix {}", candidates.len(), session_prefix);
+    log::debug!(
+        "[Gemini] Found {} candidate files for prefix {}",
+        candidates.len(),
+        session_prefix
+    );
 
     // Second pass: verify by reading the sessionId field in the file
     for candidate in candidates {
@@ -123,7 +132,10 @@ fn find_gemini_session_file(sessions_dir: &PathBuf, session_id: &str) -> Result<
         }
     }
 
-    Err(format!("Session file not found for: {} (searched for prefix: {})", session_id, session_prefix))
+    Err(format!(
+        "Session file not found for: {} (searched for prefix: {})",
+        session_id, session_prefix
+    ))
 }
 
 // ============================================================================
@@ -146,8 +158,7 @@ pub fn load_gemini_git_records(session_id: &str) -> Result<GeminiGitRecords, Str
     let content = fs::read_to_string(&records_file)
         .map_err(|e| format!("Failed to read git records: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse git records: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse git records: {}", e))
 }
 
 /// Save Git records for a Gemini session
@@ -158,8 +169,7 @@ pub fn save_gemini_git_records(session_id: &str, records: &GeminiGitRecords) -> 
     let content = serde_json::to_string_pretty(records)
         .map_err(|e| format!("Failed to serialize git records: {}", e))?;
 
-    fs::write(&records_file, content)
-        .map_err(|e| format!("Failed to write git records: {}", e))?;
+    fs::write(&records_file, content).map_err(|e| format!("Failed to write git records: {}", e))?;
 
     log::debug!("Saved Gemini git records for session: {}", session_id);
     Ok(())
@@ -173,14 +183,20 @@ pub fn truncate_gemini_git_records(session_id: &str, prompt_index: usize) -> Res
     let before_count = git_records.records.len();
 
     // Remove records at and after prompt_index (keep only records BEFORE)
-    git_records.records.retain(|r| r.prompt_index < prompt_index);
+    git_records
+        .records
+        .retain(|r| r.prompt_index < prompt_index);
 
     let after_count = git_records.records.len();
 
     save_gemini_git_records(session_id, &git_records)?;
 
-    log::info!("[Gemini Rewind] Truncated git records: kept {} records before prompt #{} (removed {})",
-        after_count, prompt_index, before_count - after_count);
+    log::info!(
+        "[Gemini Rewind] Truncated git records: kept {} records before prompt #{} (removed {})",
+        after_count,
+        prompt_index,
+        before_count - after_count
+    );
     Ok(())
 }
 
@@ -190,7 +206,10 @@ pub fn truncate_gemini_git_records(session_id: &str, prompt_index: usize) -> Res
 
 /// Extract prompts from Gemini session chat file
 /// Gemini stores sessions in chats/session-*.json files with structured format
-fn extract_gemini_prompts(session_id: &str, project_path: &str) -> Result<Vec<PromptRecord>, String> {
+fn extract_gemini_prompts(
+    session_id: &str,
+    project_path: &str,
+) -> Result<Vec<PromptRecord>, String> {
     let sessions_dir = get_gemini_sessions_dir(project_path)?;
 
     // Find session file using helper function (handles Gemini's 8-char prefix naming)
@@ -221,7 +240,8 @@ fn extract_gemini_prompts(session_id: &str, project_path: &str) -> Result<Vec<Pr
 
         // Extract text content from "content" field (direct string)
         // Gemini CLI stores content as a simple string, not as parts array
-        let extracted_text = message.get("content")
+        let extracted_text = message
+            .get("content")
             .and_then(|c| c.as_str())
             .unwrap_or("")
             .to_string();
@@ -246,7 +266,7 @@ fn extract_gemini_prompts(session_id: &str, project_path: &str) -> Result<Vec<Pr
             git_commit_after: None,
             timestamp,
             source: "project".to_string(), // Gemini always from project interface
-            line_number: 0, // Gemini uses JSON format, no specific line number
+            line_number: 0,                // Gemini uses JSON format, no specific line number
         });
 
         prompt_index += 1;
@@ -276,7 +296,10 @@ fn extract_gemini_prompts(session_id: &str, project_path: &str) -> Result<Vec<Pr
 
 /// Get prompt list for Gemini sessions (for revert picker)
 #[tauri::command]
-pub async fn get_gemini_prompt_list(session_id: String, project_path: String) -> Result<Vec<PromptRecord>, String> {
+pub async fn get_gemini_prompt_list(
+    session_id: String,
+    project_path: String,
+) -> Result<Vec<PromptRecord>, String> {
     extract_gemini_prompts(&session_id, &project_path)
 }
 
@@ -298,8 +321,8 @@ pub async fn check_gemini_rewind_capabilities(
     );
 
     // Respect global execution config for git operations
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
     let git_operations_disabled = execution_config.disable_rewind_git_operations;
 
     // Extract prompts to validate index
@@ -313,7 +336,9 @@ pub async fn check_gemini_rewind_capabilities(
             conversation: true,
             code: false,
             both: false,
-            warning: Some("Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".to_string()),
+            warning: Some(
+                "Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".to_string(),
+            ),
             source: prompt.source.clone(),
         });
     }
@@ -346,7 +371,10 @@ pub async fn check_gemini_rewind_capabilities(
             source: "project".to_string(),
         })
     } else {
-        log::warn!("[Gemini Rewind] ⚠️ No git record found for prompt #{}", prompt_index);
+        log::warn!(
+            "[Gemini Rewind] ⚠️ No git record found for prompt #{}",
+            prompt_index
+        );
         Ok(RewindCapabilities {
             conversation: true,
             code: false,
@@ -368,18 +396,24 @@ pub async fn record_gemini_prompt_sent(
     project_path: String,
     _prompt_text: String,
 ) -> Result<usize, String> {
-    log::info!("[Gemini Record] Recording prompt sent for session: {}", session_id);
+    log::info!(
+        "[Gemini Record] Recording prompt sent for session: {}",
+        session_id
+    );
 
     // Check if Git operations are disabled in config
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     if execution_config.disable_rewind_git_operations {
         log::info!("[Gemini Record] Git operations disabled, skipping git record");
         // Still need to return a prompt_index for tracking purposes
         let git_records = load_gemini_git_records(&session_id)?;
         let prompt_index = git_records.records.len();
-        log::info!("[Gemini Record] Returning prompt index #{} (no git record)", prompt_index);
+        log::info!(
+            "[Gemini Record] Returning prompt index #{} (no git record)",
+            prompt_index
+        );
         return Ok(prompt_index);
     }
 
@@ -413,8 +447,11 @@ pub async fn record_gemini_prompt_sent(
     git_records.records.push(record);
     save_gemini_git_records(&session_id, &git_records)?;
 
-    log::info!("[Gemini Record] Recorded prompt #{} with commit_before: {}",
-        prompt_index, &commit_before[..8.min(commit_before.len())]);
+    log::info!(
+        "[Gemini Record] Recorded prompt #{} with commit_before: {}",
+        prompt_index,
+        &commit_before[..8.min(commit_before.len())]
+    );
 
     Ok(prompt_index)
 }
@@ -426,15 +463,20 @@ pub async fn record_gemini_prompt_completed(
     project_path: String,
     prompt_index: usize,
 ) -> Result<(), String> {
-    log::info!("[Gemini Record] Recording prompt #{} completed for session: {}",
-        prompt_index, session_id);
+    log::info!(
+        "[Gemini Record] Recording prompt #{} completed for session: {}",
+        prompt_index,
+        session_id
+    );
 
     // Check if Git operations are disabled in config
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     if execution_config.disable_rewind_git_operations {
-        log::info!("[Gemini Record] Git operations disabled, skipping git commit and record update");
+        log::info!(
+            "[Gemini Record] Git operations disabled, skipping git commit and record update"
+        );
         return Ok(());
     }
 
@@ -442,10 +484,16 @@ pub async fn record_gemini_prompt_completed(
     let commit_message = format!("[Gemini] After prompt #{}", prompt_index);
     match simple_git::git_commit_changes(&project_path, &commit_message) {
         Ok(true) => {
-            log::info!("[Gemini Record] Auto-committed changes after prompt #{}", prompt_index);
+            log::info!(
+                "[Gemini Record] Auto-committed changes after prompt #{}",
+                prompt_index
+            );
         }
         Ok(false) => {
-            log::debug!("[Gemini Record] No changes to commit after prompt #{}", prompt_index);
+            log::debug!(
+                "[Gemini Record] No changes to commit after prompt #{}",
+                prompt_index
+            );
         }
         Err(e) => {
             log::warn!("[Gemini Record] Failed to auto-commit: {}", e);
@@ -460,14 +508,24 @@ pub async fn record_gemini_prompt_completed(
     // Update the record
     let mut git_records = load_gemini_git_records(&session_id)?;
 
-    if let Some(record) = git_records.records.iter_mut().find(|r| r.prompt_index == prompt_index) {
+    if let Some(record) = git_records
+        .records
+        .iter_mut()
+        .find(|r| r.prompt_index == prompt_index)
+    {
         record.commit_after = Some(commit_after.clone());
         save_gemini_git_records(&session_id, &git_records)?;
 
-        log::info!("[Gemini Record] Updated prompt #{} with commit_after: {}",
-            prompt_index, &commit_after[..8.min(commit_after.len())]);
+        log::info!(
+            "[Gemini Record] Updated prompt #{} with commit_after: {}",
+            prompt_index,
+            &commit_after[..8.min(commit_after.len())]
+        );
     } else {
-        log::warn!("[Gemini Record] Record not found for prompt #{}", prompt_index);
+        log::warn!(
+            "[Gemini Record] Record not found for prompt #{}",
+            prompt_index
+        );
     }
 
     Ok(())
@@ -522,20 +580,26 @@ pub fn truncate_gemini_session_to_prompt(
             if user_prompt_count == prompt_index {
                 // Found the target prompt - truncate AT this index (not after)
                 truncate_at_index = idx;
-                log::debug!("[Gemini Rewind] Found prompt #{} at message index {}", prompt_index, idx);
+                log::debug!(
+                    "[Gemini Rewind] Found prompt #{} at message index {}",
+                    prompt_index,
+                    idx
+                );
                 break;
             }
             user_prompt_count += 1;
         }
     }
 
-    log::info!("[Gemini Rewind] Truncating: keeping {} messages (removing from index {})",
-        truncate_at_index, truncate_at_index);
+    log::info!(
+        "[Gemini Rewind] Truncating: keeping {} messages (removing from index {})",
+        truncate_at_index,
+        truncate_at_index
+    );
 
     // Truncate messages array - keep only messages BEFORE the target prompt
-    session_data["messages"] = serde_json::Value::Array(
-        messages.iter().take(truncate_at_index).cloned().collect()
-    );
+    session_data["messages"] =
+        serde_json::Value::Array(messages.iter().take(truncate_at_index).cloned().collect());
 
     // Write back to file
     let new_content = serde_json::to_string_pretty(&session_data)
@@ -544,7 +608,10 @@ pub fn truncate_gemini_session_to_prompt(
     fs::write(&session_file, new_content)
         .map_err(|e| format!("Failed to write session file: {}", e))?;
 
-    log::info!("[Gemini Rewind] Truncated session to before prompt #{}", prompt_index);
+    log::info!(
+        "[Gemini Rewind] Truncated session to before prompt #{}",
+        prompt_index
+    );
     Ok(())
 }
 
@@ -560,12 +627,16 @@ pub async fn revert_gemini_to_prompt(
     prompt_index: usize,
     mode: RewindMode,
 ) -> Result<String, String> {
-    log::info!("[Gemini Rewind] Reverting session {} to prompt #{} with mode: {:?}",
-        session_id, prompt_index, mode);
+    log::info!(
+        "[Gemini Rewind] Reverting session {} to prompt #{} with mode: {:?}",
+        session_id,
+        prompt_index,
+        mode
+    );
 
     // Load execution config to check if Git operations are disabled
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     let git_operations_disabled = execution_config.disable_rewind_git_operations;
 
@@ -581,14 +652,18 @@ pub async fn revert_gemini_to_prompt(
 
     // Load Git records
     let git_records = load_gemini_git_records(&session_id)?;
-    let git_record = git_records.records.iter().find(|r| r.prompt_index == prompt_index);
+    let git_record = git_records
+        .records
+        .iter()
+        .find(|r| r.prompt_index == prompt_index);
 
     // Validate mode compatibility
     match mode {
         RewindMode::CodeOnly | RewindMode::Both => {
             if git_operations_disabled {
                 return Err(
-                    "无法回滚代码：Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".into()
+                    "无法回滚代码：Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。"
+                        .into(),
                 );
             }
             if git_record.is_none() {
@@ -614,7 +689,10 @@ pub async fn revert_gemini_to_prompt(
                 truncate_gemini_git_records(&session_id, prompt_index)?;
             }
 
-            log::info!("[Gemini Rewind] Successfully reverted conversation to prompt #{}", prompt_index);
+            log::info!(
+                "[Gemini Rewind] Successfully reverted conversation to prompt #{}",
+                prompt_index
+            );
         }
 
         RewindMode::CodeOnly => {
@@ -623,15 +701,23 @@ pub async fn revert_gemini_to_prompt(
             let record = git_record.unwrap();
 
             // Stash uncommitted changes
-            simple_git::git_stash_save(&project_path,
-                &format!("Auto-stash before Gemini code revert to prompt #{}", prompt_index))
-                .map_err(|e| format!("Failed to stash changes: {}", e))?;
+            simple_git::git_stash_save(
+                &project_path,
+                &format!(
+                    "Auto-stash before Gemini code revert to prompt #{}",
+                    prompt_index
+                ),
+            )
+            .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
             // Reset to commit before this prompt
             simple_git::git_reset_hard(&project_path, &record.commit_before)
                 .map_err(|e| format!("Failed to reset code: {}", e))?;
 
-            log::info!("[Gemini Rewind] Successfully reverted code to prompt #{}", prompt_index);
+            log::info!(
+                "[Gemini Rewind] Successfully reverted code to prompt #{}",
+                prompt_index
+            );
         }
 
         RewindMode::Both => {
@@ -640,9 +726,14 @@ pub async fn revert_gemini_to_prompt(
             let record = git_record.unwrap();
 
             // Stash uncommitted changes
-            simple_git::git_stash_save(&project_path,
-                &format!("Auto-stash before Gemini full revert to prompt #{}", prompt_index))
-                .map_err(|e| format!("Failed to stash changes: {}", e))?;
+            simple_git::git_stash_save(
+                &project_path,
+                &format!(
+                    "Auto-stash before Gemini full revert to prompt #{}",
+                    prompt_index
+                ),
+            )
+            .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
             // Reset code
             simple_git::git_reset_hard(&project_path, &record.commit_before)
@@ -656,7 +747,10 @@ pub async fn revert_gemini_to_prompt(
                 truncate_gemini_git_records(&session_id, prompt_index)?;
             }
 
-            log::info!("[Gemini Rewind] Successfully reverted both to prompt #{}", prompt_index);
+            log::info!(
+                "[Gemini Rewind] Successfully reverted both to prompt #{}",
+                prompt_index
+            );
         }
     }
 

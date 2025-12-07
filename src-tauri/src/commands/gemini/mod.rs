@@ -22,37 +22,29 @@ pub use types::GeminiProcessState;
 
 // Re-export Tauri commands
 pub use config::{
+    delete_gemini_session,
     get_gemini_config,
     get_gemini_models,
-    update_gemini_config,
+    get_gemini_session_detail,
     // Session history commands
     get_gemini_session_logs,
-    list_gemini_sessions,
-    get_gemini_session_detail,
-    delete_gemini_session,
     // System prompt commands
     get_gemini_system_prompt,
+    list_gemini_sessions,
     save_gemini_system_prompt,
+    update_gemini_config,
 };
 pub use session::{cancel_gemini, check_gemini_installed, execute_gemini};
 
 // Re-export Gemini Rewind commands
 pub use git_ops::{
-    get_gemini_prompt_list,
-    check_gemini_rewind_capabilities,
-    record_gemini_prompt_sent,
-    record_gemini_prompt_completed,
-    revert_gemini_to_prompt,
+    check_gemini_rewind_capabilities, get_gemini_prompt_list, record_gemini_prompt_completed,
+    record_gemini_prompt_sent, revert_gemini_to_prompt,
 };
 
 // Re-export Gemini Provider commands
 pub use provider::{
-    get_gemini_provider_presets,
-    get_current_gemini_provider_config,
-    switch_gemini_provider,
-    add_gemini_provider_config,
-    update_gemini_provider_config,
-    delete_gemini_provider_config,
-    clear_gemini_provider_config,
-    test_gemini_provider_connection,
+    add_gemini_provider_config, clear_gemini_provider_config, delete_gemini_provider_config,
+    get_current_gemini_provider_config, get_gemini_provider_presets, switch_gemini_provider,
+    test_gemini_provider_connection, update_gemini_provider_config,
 };

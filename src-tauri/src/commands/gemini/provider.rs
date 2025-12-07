@@ -26,7 +26,7 @@ pub struct GeminiProviderConfig {
     pub description: Option<String>,
     pub website_url: Option<String>,
     pub category: Option<String>,
-    pub env: HashMap<String, String>,  // Environment variables for .env file
+    pub env: HashMap<String, String>, // Environment variables for .env file
     pub is_official: Option<bool>,
     pub is_partner: Option<bool>,
     pub created_at: Option<i64>,
@@ -36,12 +36,12 @@ pub struct GeminiProviderConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CurrentGeminiProviderConfig {
-    pub env: HashMap<String, String>,  // ~/.gemini/.env content
-    pub settings: serde_json::Value,   // ~/.gemini/settings.json content
-    pub api_key: Option<String>,       // Extracted from env
-    pub base_url: Option<String>,      // Extracted from env
-    pub model: Option<String>,         // Extracted from env
-    pub selected_auth_type: Option<String>,  // From settings.json
+    pub env: HashMap<String, String>,       // ~/.gemini/.env content
+    pub settings: serde_json::Value,        // ~/.gemini/settings.json content
+    pub api_key: Option<String>,            // Extracted from env
+    pub base_url: Option<String>,           // Extracted from env
+    pub model: Option<String>,              // Extracted from env
+    pub selected_auth_type: Option<String>, // From settings.json
 }
 
 // ============================================================================
@@ -74,8 +74,8 @@ fn read_env_file(path: &PathBuf) -> Result<HashMap<String, String>, String> {
         return Ok(HashMap::new());
     }
 
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read .env file: {}", e))?;
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read .env file: {}", e))?;
 
     let mut env_map = HashMap::new();
     for line in content.lines() {
@@ -101,8 +101,7 @@ fn read_env_file(path: &PathBuf) -> Result<HashMap<String, String>, String> {
 fn write_env_file(path: &PathBuf, env_map: &HashMap<String, String>) -> Result<(), String> {
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create directory: {}", e))?;
+        fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
     }
 
     let mut content = String::new();
@@ -118,8 +117,7 @@ fn write_env_file(path: &PathBuf, env_map: &HashMap<String, String>) -> Result<(
         }
     }
 
-    fs::write(path, content)
-        .map_err(|e| format!("Failed to write .env file: {}", e))
+    fs::write(path, content).map_err(|e| format!("Failed to write .env file: {}", e))
 }
 
 // ============================================================================
@@ -132,26 +130,23 @@ fn read_settings_file(path: &PathBuf) -> Result<serde_json::Value, String> {
         return Ok(serde_json::json!({}));
     }
 
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read settings.json: {}", e))?;
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read settings.json: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse settings.json: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse settings.json: {}", e))
 }
 
 /// Write settings.json (preserves existing fields like mcpServers)
 fn write_settings_file(path: &PathBuf, settings: &serde_json::Value) -> Result<(), String> {
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| format!("Failed to create directory: {}", e))?;
+        fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
     }
 
     let content = serde_json::to_string_pretty(settings)
         .map_err(|e| format!("Failed to serialize settings: {}", e))?;
 
-    fs::write(path, content)
-        .map_err(|e| format!("Failed to write settings.json: {}", e))
+    fs::write(path, content).map_err(|e| format!("Failed to write settings.json: {}", e))
 }
 
 /// Set selected auth type in settings.json
@@ -205,7 +200,8 @@ pub async fn get_current_gemini_provider_config() -> Result<CurrentGeminiProvide
     let settings = read_settings_file(&settings_path)?;
 
     // Extract values
-    let api_key = env.get("GEMINI_API_KEY")
+    let api_key = env
+        .get("GEMINI_API_KEY")
         .or_else(|| env.get("GOOGLE_API_KEY"))
         .cloned();
 
@@ -249,10 +245,16 @@ pub async fn switch_gemini_provider(config: GeminiProviderConfig) -> Result<Stri
     let mut settings = read_settings_file(&settings_path)?;
 
     // Determine if this is official (OAuth) or third-party (API Key)
-    let is_official = config.is_official.unwrap_or(false) ||
-                      config.category.as_deref() == Some("official") ||
-                      (config.env.get("GOOGLE_GEMINI_BASE_URL").map_or(true, |s| s.is_empty()) &&
-                       config.env.get("GEMINI_API_KEY").map_or(true, |s| s.is_empty()));
+    let is_official = config.is_official.unwrap_or(false)
+        || config.category.as_deref() == Some("official")
+        || (config
+            .env
+            .get("GOOGLE_GEMINI_BASE_URL")
+            .map_or(true, |s| s.is_empty())
+            && config
+                .env
+                .get("GEMINI_API_KEY")
+                .map_or(true, |s| s.is_empty()));
 
     if is_official {
         // Official (OAuth): Clear env and set auth type to oauth-personal
@@ -277,7 +279,10 @@ pub async fn switch_gemini_provider(config: GeminiProviderConfig) -> Result<Stri
     // Write settings.json
     write_settings_file(&settings_path, &settings)?;
 
-    log::info!("[Gemini Provider] Successfully switched to: {}", config.name);
+    log::info!(
+        "[Gemini Provider] Successfully switched to: {}",
+        config.name
+    );
     Ok(format!("成功切换到 Gemini 供应商: {}", config.name))
 }
 
@@ -291,8 +296,7 @@ pub async fn add_gemini_provider_config(config: GeminiProviderConfig) -> Result<
     // Ensure parent directory exists
     if let Some(parent) = providers_path.parent() {
         if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
         }
     }
 
@@ -318,7 +322,10 @@ pub async fn add_gemini_provider_config(config: GeminiProviderConfig) -> Result<
     fs::write(&providers_path, content)
         .map_err(|e| format!("Failed to write providers.json: {}", e))?;
 
-    log::info!("[Gemini Provider] Successfully added provider: {}", config.name);
+    log::info!(
+        "[Gemini Provider] Successfully added provider: {}",
+        config.name
+    );
     Ok(format!("成功添加 Gemini 供应商: {}", config.name))
 }
 
@@ -339,7 +346,9 @@ pub async fn update_gemini_provider_config(config: GeminiProviderConfig) -> Resu
         .map_err(|e| format!("Failed to parse providers.json: {}", e))?;
 
     // Find and update the provider
-    let index = providers.iter().position(|p| p.id == config.id)
+    let index = providers
+        .iter()
+        .position(|p| p.id == config.id)
         .ok_or_else(|| format!("Provider with ID '{}' not found", config.id))?;
 
     providers[index] = config.clone();
@@ -350,7 +359,10 @@ pub async fn update_gemini_provider_config(config: GeminiProviderConfig) -> Resu
     fs::write(&providers_path, content)
         .map_err(|e| format!("Failed to write providers.json: {}", e))?;
 
-    log::info!("[Gemini Provider] Successfully updated provider: {}", config.name);
+    log::info!(
+        "[Gemini Provider] Successfully updated provider: {}",
+        config.name
+    );
     Ok(format!("成功更新 Gemini 供应商: {}", config.name))
 }
 
@@ -410,7 +422,10 @@ pub async fn clear_gemini_provider_config() -> Result<String, String> {
 
 /// Test Gemini provider connection
 #[tauri::command]
-pub async fn test_gemini_provider_connection(base_url: String, api_key: Option<String>) -> Result<String, String> {
+pub async fn test_gemini_provider_connection(
+    base_url: String,
+    api_key: Option<String>,
+) -> Result<String, String> {
     log::info!("[Gemini Provider] Testing connection to: {}", base_url);
 
     // Simple connectivity test
@@ -437,8 +452,6 @@ pub async fn test_gemini_provider_connection(base_url: String, api_key: Option<S
                 Ok(format!("连接测试完成，状态: {}", status))
             }
         }
-        Err(e) => {
-            Err(format!("连接测试失败: {}", e))
-        }
+        Err(e) => Err(format!("连接测试失败: {}", e)),
     }
 }

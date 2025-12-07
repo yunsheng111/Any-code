@@ -6,7 +6,6 @@
  * - Session listing and history
  * - Session deletion
  */
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::process::Stdio;
@@ -17,8 +16,8 @@ use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
 
 // Import platform-specific utilities for window hiding
-use crate::commands::claude::apply_no_window_async;
 use crate::claude_binary::detect_binary_for_tool;
+use crate::commands::claude::apply_no_window_async;
 // Import WSL utilities for Windows + WSL Codex support
 use super::super::wsl_utils;
 // Import config module for sessions directory
@@ -191,10 +190,7 @@ pub async fn resume_last_codex(
 
 /// Cancels a running Codex execution
 #[tauri::command]
-pub async fn cancel_codex(
-    session_id: Option<String>,
-    app_handle: AppHandle,
-) -> Result<(), String> {
+pub async fn cancel_codex(session_id: Option<String>, app_handle: AppHandle) -> Result<(), String> {
     log::info!("cancel_codex called for session: {:?}", session_id);
 
     let state: tauri::State<'_, CodexProcessState> = app_handle.state();
@@ -203,7 +199,10 @@ pub async fn cancel_codex(
     if let Some(sid) = session_id {
         // Cancel specific session
         if let Some(mut child) = processes.remove(&sid) {
-            child.kill().await.map_err(|e| format!("Failed to kill process: {}", e))?;
+            child
+                .kill()
+                .await
+                .map_err(|e| format!("Failed to kill process: {}", e))?;
             log::info!("Killed Codex process for session: {}", sid);
         } else {
             log::warn!("No running process found for session: {}", sid);
@@ -237,7 +236,10 @@ pub async fn list_codex_sessions() -> Result<Vec<CodexSession>, String> {
     log::info!("Looking for Codex sessions in: {:?}", sessions_dir);
 
     if !sessions_dir.exists() {
-        log::warn!("Codex sessions directory does not exist: {:?}", sessions_dir);
+        log::warn!(
+            "Codex sessions directory does not exist: {:?}",
+            sessions_dir
+        );
         return Ok(Vec::new());
     }
 
@@ -255,11 +257,16 @@ pub async fn list_codex_sessions() -> Result<Vec<CodexSession>, String> {
                                 if let Ok(file_entries) = std::fs::read_dir(day_entry.path()) {
                                     for file_entry in file_entries.flatten() {
                                         let path = file_entry.path();
-                                        if path.extension().and_then(|s| s.to_str()) == Some("jsonl") {
+                                        if path.extension().and_then(|s| s.to_str())
+                                            == Some("jsonl")
+                                        {
                                             match parse_codex_session_file(&path) {
                                                 Some(session) => {
-                                                    log::debug!("Found session: {} ({})",
-                                                        session.id, session.project_path);
+                                                    log::debug!(
+                                                        "Found session: {} ({})",
+                                                        session.id,
+                                                        session.project_path
+                                                    );
                                                     sessions.push(session);
                                                 }
                                                 None => {
@@ -347,7 +354,9 @@ pub fn parse_codex_session_file(path: &std::path::Path) -> Option<CodexSession> 
                 if first_message.is_none() && event["type"].as_str() == Some("response_item") {
                     if let Some(payload_obj) = event["payload"].as_object() {
                         if payload_obj.get("role").and_then(|r| r.as_str()) == Some("user") {
-                            if let Some(content) = payload_obj.get("content").and_then(|c| c.as_array()) {
+                            if let Some(content) =
+                                payload_obj.get("content").and_then(|c| c.as_array())
+                            {
                                 // Extract text from content array
                                 for item in content {
                                     // Check if this is a text content block (input_text type)
@@ -357,7 +366,8 @@ pub fn parse_codex_session_file(path: &std::path::Path) -> Option<CodexSession> 
                                             if !text.contains("<environment_context>")
                                                 && !text.contains("# AGENTS.md instructions")
                                                 && !text.is_empty()
-                                                && text.trim().len() > 0 {
+                                                && text.trim().len() > 0
+                                            {
                                                 first_message = Some(text.to_string());
                                                 break;
                                             }
@@ -399,7 +409,9 @@ pub fn parse_codex_session_file(path: &std::path::Path) -> Option<CodexSession> 
 /// Loads Codex session history from JSONL file
 /// On Windows with WSL mode, reads from WSL filesystem via UNC path
 #[tauri::command]
-pub async fn load_codex_session_history(session_id: String) -> Result<Vec<serde_json::Value>, String> {
+pub async fn load_codex_session_history(
+    session_id: String,
+) -> Result<Vec<serde_json::Value>, String> {
     log::info!("load_codex_session_history called for: {}", session_id);
 
     // Use unified sessions directory function (supports WSL)
@@ -432,26 +444,44 @@ pub async fn load_codex_session_history(session_id: String) -> Result<Vec<serde_
                     }
                     Err(e) => {
                         parse_errors += 1;
-                        log::warn!("Failed to parse line {} in session {}: {}", line_count, session_id, e);
+                        log::warn!(
+                            "Failed to parse line {} in session {}: {}",
+                            line_count,
+                            session_id,
+                            e
+                        );
                         log::debug!("Problematic line content: {}", line);
                     }
                 }
             }
             Err(e) => {
-                log::error!("Failed to read line {} in session {}: {}", line_count, session_id, e);
+                log::error!(
+                    "Failed to read line {} in session {}: {}",
+                    line_count,
+                    session_id,
+                    e
+                );
             }
         }
     }
 
-    log::info!("Loaded {} events from Codex session {} (total lines: {}, parse errors: {})",
-        events.len(), session_id, line_count, parse_errors);
+    log::info!(
+        "Loaded {} events from Codex session {} (total lines: {}, parse errors: {})",
+        events.len(),
+        session_id,
+        line_count,
+        parse_errors
+    );
     Ok(events)
 }
 
 /// Finds the JSONL file for a given session ID
-pub fn find_session_file(sessions_dir: &std::path::Path, session_id: &str) -> Option<std::path::PathBuf> {
-    use walkdir::WalkDir;
+pub fn find_session_file(
+    sessions_dir: &std::path::Path,
+    session_id: &str,
+) -> Option<std::path::PathBuf> {
     use std::io::{BufRead, BufReader};
+    use walkdir::WalkDir;
 
     for entry in WalkDir::new(sessions_dir).into_iter().flatten() {
         if entry.path().extension().and_then(|s| s.to_str()) == Some("jsonl") {
@@ -464,7 +494,11 @@ pub fn find_session_file(sessions_dir: &std::path::Path, session_id: &str) -> Op
                         if meta["type"].as_str() == Some("session_meta") {
                             if let Some(id) = meta["payload"]["id"].as_str() {
                                 if id == session_id {
-                                    log::info!("Found session file: {:?} for session_id: {}", entry.path(), session_id);
+                                    log::info!(
+                                        "Found session file: {:?} for session_id: {}",
+                                        entry.path(),
+                                        session_id
+                                    );
                                     return Some(entry.path().to_path_buf());
                                 }
                             }
@@ -496,7 +530,10 @@ pub async fn delete_codex_session(session_id: String) -> Result<String, String> 
     std::fs::remove_file(&session_file)
         .map_err(|e| format!("Failed to delete session file: {}", e))?;
 
-    log::info!("Successfully deleted Codex session file: {:?}", session_file);
+    log::info!(
+        "Successfully deleted Codex session file: {:?}",
+        session_file
+    );
     Ok(format!("Session {} deleted", session_id))
 }
 
@@ -716,7 +753,7 @@ async fn execute_codex_process(
     app_handle: AppHandle,
 ) -> Result<(), String> {
     // Setup stdio
-    cmd.stdin(Stdio::piped());   // Enable stdin to pass prompt
+    cmd.stdin(Stdio::piped()); // Enable stdin to pass prompt
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
@@ -752,10 +789,8 @@ async fn execute_codex_process(
     }
 
     // Extract stdout and stderr
-    let stdout = child.stdout.take()
-        .ok_or("Failed to capture stdout")?;
-    let stderr = child.stderr.take()
-        .ok_or("Failed to capture stderr")?;
+    let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
+    let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
 
     // Generate session ID for tracking
     let session_id = format!("codex-{}", uuid::Uuid::new_v4());
@@ -774,8 +809,8 @@ async fn execute_codex_process(
     let app_handle_stdout = app_handle.clone();
     let _app_handle_stderr = app_handle.clone(); // Reserved for future stderr event emission
     let app_handle_complete = app_handle.clone();
-    let session_id_stdout = session_id.clone();  // Clone for stdout task
-    let session_id_stderr = session_id.clone();  // Clone for stderr task
+    let session_id_stdout = session_id.clone(); // Clone for stdout task
+    let session_id_stderr = session_id.clone(); // Clone for stderr task
     let session_id_complete = session_id.clone();
 
     // FIX: Emit session init event immediately so frontend can subscribe to the correct channel
@@ -802,7 +837,9 @@ async fn execute_codex_process(
                 // Use trace level to avoid flooding logs in debug mode
                 log::trace!("Codex output: {}", line);
                 // Emit to session-specific channel first (for multi-tab isolation)
-                if let Err(e) = app_handle_stdout.emit(&format!("codex-output:{}", session_id_stdout), &line) {
+                if let Err(e) =
+                    app_handle_stdout.emit(&format!("codex-output:{}", session_id_stdout), &line)
+                {
                     log::error!("Failed to emit codex-output (session-specific): {}", e);
                 }
                 // Also emit to global channel for backward compatibility
@@ -843,8 +880,13 @@ async fn execute_codex_process(
         // 🔧 CRITICAL FIX: Emit completion event immediately after stdout closes
         // Don't wait for process exit or stderr - those can take a long time
         // stdout closing means all JSONL events have been sent, session is effectively complete
-        log::info!("[Codex] Sending completion event for session: {}", session_id_complete);
-        if let Err(e) = app_handle_complete.emit(&format!("codex-complete:{}", session_id_complete), true) {
+        log::info!(
+            "[Codex] Sending completion event for session: {}",
+            session_id_complete
+        );
+        if let Err(e) =
+            app_handle_complete.emit(&format!("codex-complete:{}", session_id_complete), true)
+        {
             log::error!("Failed to emit codex-complete (session-specific): {}", e);
         }
         if let Err(e) = app_handle_complete.emit("codex-complete", true) {
@@ -891,7 +933,10 @@ async fn execute_codex_process(
                     }
                 }
             } else {
-                log::info!("[Codex] Process {} was removed (cancelled)", session_id_complete);
+                log::info!(
+                    "[Codex] Process {} was removed (cancelled)",
+                    session_id_complete
+                );
                 break;
             }
         }

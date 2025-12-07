@@ -2782,9 +2782,15 @@ export const api = {
    * @param path - Path to custom Codex CLI executable (null to clear)
    * @returns Promise resolving to success message
    */
-  async setCodexCustomPath(path: string | null): Promise<string> {
+  async setCodexCustomPath(path: string | null): Promise<void> {
     try {
-      return await invoke<string>("set_codex_custom_path", { path });
+      const normalizedPath = path?.trim() ?? "";
+
+      if (normalizedPath) {
+        await invoke<void>("set_custom_codex_path", { customPath: normalizedPath });
+      } else {
+        await invoke<void>("clear_custom_codex_path");
+      }
     } catch (error) {
       console.error("Failed to set custom Codex path:", error);
       throw error;
@@ -2798,7 +2804,7 @@ export const api = {
    */
   async validateCodexPath(path: string): Promise<boolean> {
     try {
-      return await invoke<boolean>("validate_codex_path_cmd", { path });
+      return await invoke<boolean>("validate_codex_path_cmd", { path: path.trim() });
     } catch (error) {
       console.error("Failed to validate Codex path:", error);
       return false;

@@ -1,3 +1,5 @@
+use dirs;
+use rusqlite;
 /**
  * Codex Configuration Module
  *
@@ -7,18 +9,15 @@
  * - Mode configuration (Native/WSL)
  * - Provider management (presets, switching, CRUD)
  */
-
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 use tokio::process::Command;
-use dirs;
-use rusqlite;
 
 // Import platform-specific utilities for window hiding
-use crate::commands::claude::apply_no_window_async;
 use crate::claude_binary::detect_binary_for_tool;
+use crate::commands::claude::apply_no_window_async;
 // Import WSL utilities
 use super::super::wsl_utils;
 
@@ -62,7 +61,7 @@ pub struct CodexProviderConfig {
     pub website_url: Option<String>,
     pub category: Option<String>,
     pub auth: serde_json::Value, // JSON object for auth.json
-    pub config: String, // TOML string for config.toml
+    pub config: String,          // TOML string for config.toml
     pub is_official: Option<bool>,
     pub is_partner: Option<bool>,
     pub created_at: Option<i64>,
@@ -128,7 +127,10 @@ fn resolve_windows_executable(path: &PathBuf) -> Result<PathBuf, String> {
             for ext in &extensions {
                 let with_ext = PathBuf::from(format!("{}{}", path.display(), ext));
                 if with_ext.exists() && with_ext.is_file() {
-                    log::info!("[Codex] Resolved path with extension: {}", with_ext.display());
+                    log::info!(
+                        "[Codex] Resolved path with extension: {}",
+                        with_ext.display()
+                    );
                     return Ok(with_ext);
                 }
             }
@@ -274,8 +276,7 @@ pub fn get_codex_sessions_dir() -> Result<PathBuf, String> {
     }
 
     // Native mode: use local home directory
-    let home_dir = dirs::home_dir()
-        .ok_or_else(|| "Failed to get home directory".to_string())?;
+    let home_dir = dirs::home_dir().ok_or_else(|| "Failed to get home directory".to_string())?;
 
     Ok(home_dir.join(".codex").join("sessions"))
 }
@@ -331,7 +332,9 @@ pub async fn check_codex_availability() -> Result<CodexAvailability, String> {
                 } else if !stderr_str.is_empty() {
                     stderr_str.clone()
                 } else {
-                    inst.version.clone().unwrap_or_else(|| "Unknown version".to_string())
+                    inst.version
+                        .clone()
+                        .unwrap_or_else(|| "Unknown version".to_string())
                 };
 
                 if output.status.success() {
@@ -414,6 +417,29 @@ pub async fn check_codex_availability() -> Result<CodexAvailability, String> {
 // ============================================================================
 // Custom Path Management
 // ============================================================================
+
+/// Validate Codex CLI path without persisting it
+#[tauri::command]
+pub async fn validate_codex_path_cmd(path: String) -> Result<bool, String> {
+    log::info!("[Codex] Validating path: {}", path);
+
+    let expanded_path = expand_user_path(&path)?;
+    let resolved_path = resolve_windows_executable(&expanded_path)?;
+
+    let path_str = resolved_path
+        .to_str()
+        .ok_or_else(|| "Invalid path encoding".to_string())?
+        .to_string();
+
+    let mut cmd = Command::new(&path_str);
+    cmd.arg("--version");
+    apply_no_window_async(&mut cmd);
+
+    match cmd.output().await {
+        Ok(output) => Ok(output.status.success()),
+        Err(e) => Err(format!("Failed to test Codex CLI: {}", e)),
+    }
+}
 
 /// Set custom Codex CLI path, supports ~ expansion and relative paths
 #[tauri::command]
@@ -687,7 +713,10 @@ pub fn get_codex_command_candidates() -> Vec<String> {
             candidates.push(format!(r"{}\.fnm\aliases\default\codex.cmd", userprofile));
             // Scoop install path
             candidates.push(format!(r"{}\scoop\shims\codex.cmd", userprofile));
-            candidates.push(format!(r"{}\scoop\apps\nodejs\current\codex.cmd", userprofile));
+            candidates.push(format!(
+                r"{}\scoop\apps\nodejs\current\codex.cmd",
+                userprofile
+            ));
             // Local bin directory
             candidates.push(format!(r"{}\.local\bin\codex.cmd", userprofile));
             candidates.push(format!(r"{}\.local\bin\codex", userprofile));
@@ -728,8 +757,14 @@ pub fn get_codex_command_candidates() -> Vec<String> {
 
             // fnm (Fast Node Manager) paths
             candidates.push(format!("{}/.fnm/aliases/default/bin/codex", home));
-            candidates.push(format!("{}/.local/share/fnm/aliases/default/bin/codex", home));
-            candidates.push(format!("{}/Library/Application Support/fnm/aliases/default/bin/codex", home));
+            candidates.push(format!(
+                "{}/.local/share/fnm/aliases/default/bin/codex",
+                home
+            ));
+            candidates.push(format!(
+                "{}/Library/Application Support/fnm/aliases/default/bin/codex",
+                home
+            ));
 
             // nvm current symlink
             candidates.push(format!("{}/.nvm/current/bin/codex", home));
@@ -765,7 +800,8 @@ pub fn get_codex_command_candidates() -> Vec<String> {
                 if let Ok(entries) = std::fs::read_dir(fnm_base) {
                     for entry in entries.flatten() {
                         if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                            let codex_path = entry.path().join("installation").join("bin").join("codex");
+                            let codex_path =
+                                entry.path().join("installation").join("bin").join("codex");
                             if codex_path.exists() {
                                 candidates.push(codex_path.to_string_lossy().to_string());
                             }
@@ -777,7 +813,7 @@ pub fn get_codex_command_candidates() -> Vec<String> {
 
         // Homebrew paths (Apple Silicon and Intel)
         candidates.push("/opt/homebrew/bin/codex".to_string()); // Apple Silicon (M1/M2/M3)
-        candidates.push("/usr/local/bin/codex".to_string());    // Intel Mac / Homebrew legacy
+        candidates.push("/usr/local/bin/codex".to_string()); // Intel Mac / Homebrew legacy
 
         // NPM global lib paths
         candidates.push("/opt/homebrew/lib/node_modules/@openai/codex/bin/codex".to_string());
@@ -852,13 +888,22 @@ pub async fn set_codex_mode_config(
     mode: String,
     wsl_distro: Option<String>,
 ) -> Result<String, String> {
-    log::info!("[Codex] Setting mode configuration: mode={}, wsl_distro={:?}", mode, wsl_distro);
+    log::info!(
+        "[Codex] Setting mode configuration: mode={}, wsl_distro={:?}",
+        mode,
+        wsl_distro
+    );
 
     let codex_mode = match mode.to_lowercase().as_str() {
         "auto" => wsl_utils::CodexMode::Auto,
         "native" => wsl_utils::CodexMode::Native,
         "wsl" => wsl_utils::CodexMode::Wsl,
-        _ => return Err(format!("Invalid mode: {}. Use 'auto', 'native', or 'wsl'", mode)),
+        _ => {
+            return Err(format!(
+                "Invalid mode: {}. Use 'auto', 'native', or 'wsl'",
+                mode
+            ))
+        }
     };
 
     let config = wsl_utils::CodexConfig {
@@ -868,7 +913,10 @@ pub async fn set_codex_mode_config(
 
     wsl_utils::save_codex_config(&config)?;
 
-    Ok("Configuration saved. Would you like to restart the app for changes to take effect?".to_string())
+    Ok(
+        "Configuration saved. Would you like to restart the app for changes to take effect?"
+            .to_string(),
+    )
 }
 
 // ============================================================================
@@ -877,8 +925,7 @@ pub async fn set_codex_mode_config(
 
 /// Get Codex config directory path
 fn get_codex_config_dir() -> Result<PathBuf, String> {
-    let home_dir = dirs::home_dir()
-        .ok_or_else(|| "Cannot get home directory".to_string())?;
+    let home_dir = dirs::home_dir().ok_or_else(|| "Cannot get home directory".to_string())?;
     Ok(home_dir.join(".codex"))
 }
 
@@ -920,7 +967,8 @@ fn extract_model_from_config(config: &str) -> Option<String> {
         let trimmed = line.trim();
         if trimmed.starts_with("model =") {
             let re = regex::Regex::new(r#"model\s*=\s*"([^"]+)""#).ok()?;
-            return re.captures(trimmed)
+            return re
+                .captures(trimmed)
                 .and_then(|caps| caps.get(1))
                 .map(|m| m.as_str().to_string());
         }
@@ -964,8 +1012,7 @@ pub async fn get_current_codex_config() -> Result<CurrentCodexConfig, String> {
     let auth: serde_json::Value = if auth_path.exists() {
         let content = fs::read_to_string(&auth_path)
             .map_err(|e| format!("Failed to read auth.json: {}", e))?;
-        serde_json::from_str(&content)
-            .map_err(|e| format!("Failed to parse auth.json: {}", e))?
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse auth.json: {}", e))?
     } else {
         serde_json::json!({})
     };
@@ -1010,8 +1057,10 @@ pub async fn switch_codex_provider(config: CodexProviderConfig) -> Result<String
 
     // Validate new TOML if not empty
     let new_config_table: Option<toml::Table> = if !config.config.trim().is_empty() {
-        Some(toml::from_str(&config.config)
-            .map_err(|e| format!("Invalid TOML configuration: {}", e))?)
+        Some(
+            toml::from_str(&config.config)
+                .map_err(|e| format!("Invalid TOML configuration: {}", e))?,
+        )
     } else {
         None
     };
@@ -1024,7 +1073,9 @@ pub async fn switch_codex_provider(config: CodexProviderConfig) -> Result<String
         let existing_content = fs::read_to_string(&auth_path)
             .map_err(|e| format!("Failed to read existing auth.json: {}", e))?;
 
-        if let Ok(mut existing_auth) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&existing_content) {
+        if let Ok(mut existing_auth) =
+            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&existing_content)
+        {
             // Merge new auth into existing - new values take precedence
             if let serde_json::Value::Object(new_auth_map) = serde_json::to_value(&config.auth)
                 .map_err(|e| format!("Failed to convert auth: {}", e))?
@@ -1060,15 +1111,13 @@ pub async fn switch_codex_provider(config: CodexProviderConfig) -> Result<String
         }
     } else {
         // No existing auth, use new auth directly
-        serde_json::to_value(&config.auth)
-            .map_err(|e| format!("Failed to convert auth: {}", e))?
+        serde_json::to_value(&config.auth).map_err(|e| format!("Failed to convert auth: {}", e))?
     };
 
     // Write merged auth.json
     let auth_content = serde_json::to_string_pretty(&final_auth)
         .map_err(|e| format!("Failed to serialize auth: {}", e))?;
-    fs::write(&auth_path, auth_content)
-        .map_err(|e| format!("Failed to write auth.json: {}", e))?;
+    fs::write(&auth_path, auth_content).map_err(|e| format!("Failed to write auth.json: {}", e))?;
 
     // Merge config.toml - preserve user's custom settings
     let final_config = if config_path.exists() {
@@ -1077,11 +1126,7 @@ pub async fn switch_codex_provider(config: CodexProviderConfig) -> Result<String
 
         if let Ok(mut existing_table) = toml::from_str::<toml::Table>(&existing_content) {
             // Provider-specific keys that will be overwritten
-            let provider_keys = [
-                "model_provider",
-                "model",
-                "model_providers",
-            ];
+            let provider_keys = ["model_provider", "model", "model_providers"];
 
             if let Some(new_table) = new_config_table {
                 // Remove provider-specific keys from existing config
@@ -1119,7 +1164,10 @@ pub async fn switch_codex_provider(config: CodexProviderConfig) -> Result<String
         .map_err(|e| format!("Failed to write config.toml: {}", e))?;
 
     log::info!("[Codex Provider] Successfully switched to: {}", config.name);
-    Ok(format!("Successfully switched to Codex provider: {}", config.name))
+    Ok(format!(
+        "Successfully switched to Codex provider: {}",
+        config.name
+    ))
 }
 
 /// Add a new Codex provider configuration
@@ -1132,8 +1180,7 @@ pub async fn add_codex_provider_config(config: CodexProviderConfig) -> Result<St
     // Ensure parent directory exists
     if let Some(parent) = providers_path.parent() {
         if !parent.exists() {
-            fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+            fs::create_dir_all(parent).map_err(|e| format!("Failed to create directory: {}", e))?;
         }
     }
 
@@ -1159,8 +1206,14 @@ pub async fn add_codex_provider_config(config: CodexProviderConfig) -> Result<St
     fs::write(&providers_path, content)
         .map_err(|e| format!("Failed to write providers.json: {}", e))?;
 
-    log::info!("[Codex Provider] Successfully added provider: {}", config.name);
-    Ok(format!("Successfully added Codex provider: {}", config.name))
+    log::info!(
+        "[Codex Provider] Successfully added provider: {}",
+        config.name
+    );
+    Ok(format!(
+        "Successfully added Codex provider: {}",
+        config.name
+    ))
 }
 
 /// Update an existing Codex provider configuration
@@ -1180,7 +1233,9 @@ pub async fn update_codex_provider_config(config: CodexProviderConfig) -> Result
         .map_err(|e| format!("Failed to parse providers.json: {}", e))?;
 
     // Find and update the provider
-    let index = providers.iter().position(|p| p.id == config.id)
+    let index = providers
+        .iter()
+        .position(|p| p.id == config.id)
         .ok_or_else(|| format!("Provider with ID '{}' not found", config.id))?;
 
     providers[index] = config.clone();
@@ -1191,8 +1246,14 @@ pub async fn update_codex_provider_config(config: CodexProviderConfig) -> Result
     fs::write(&providers_path, content)
         .map_err(|e| format!("Failed to write providers.json: {}", e))?;
 
-    log::info!("[Codex Provider] Successfully updated provider: {}", config.name);
-    Ok(format!("Successfully updated Codex provider: {}", config.name))
+    log::info!(
+        "[Codex Provider] Successfully updated provider: {}",
+        config.name
+    );
+    Ok(format!(
+        "Successfully updated Codex provider: {}",
+        config.name
+    ))
 }
 
 /// Delete a Codex provider configuration
@@ -1239,8 +1300,7 @@ pub async fn clear_codex_provider_config() -> Result<String, String> {
 
     // Remove auth.json if exists
     if auth_path.exists() {
-        fs::remove_file(&auth_path)
-            .map_err(|e| format!("Failed to remove auth.json: {}", e))?;
+        fs::remove_file(&auth_path).map_err(|e| format!("Failed to remove auth.json: {}", e))?;
     }
 
     // Remove config.toml if exists
@@ -1255,7 +1315,10 @@ pub async fn clear_codex_provider_config() -> Result<String, String> {
 
 /// Test Codex provider connection
 #[tauri::command]
-pub async fn test_codex_provider_connection(base_url: String, api_key: Option<String>) -> Result<String, String> {
+pub async fn test_codex_provider_connection(
+    base_url: String,
+    api_key: Option<String>,
+) -> Result<String, String> {
     log::info!("[Codex Provider] Testing connection to: {}", base_url);
 
     // Simple connectivity test - just try to reach the endpoint
@@ -1277,13 +1340,14 @@ pub async fn test_codex_provider_connection(base_url: String, api_key: Option<St
             let status = response.status();
             if status.is_success() || status.as_u16() == 401 {
                 // 401 means the endpoint exists but auth is required
-                Ok(format!("Connection test successful: endpoint is reachable (status: {})", status))
+                Ok(format!(
+                    "Connection test successful: endpoint is reachable (status: {})",
+                    status
+                ))
             } else {
                 Ok(format!("Connection test completed with status: {}", status))
             }
         }
-        Err(e) => {
-            Err(format!("Connection test failed: {}", e))
-        }
+        Err(e) => Err(format!("Connection test failed: {}", e)),
     }
 }

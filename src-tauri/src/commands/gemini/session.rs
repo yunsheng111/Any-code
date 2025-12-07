@@ -10,7 +10,10 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
 use super::config::{build_gemini_env, load_gemini_config};
-use super::parser::{convert_to_unified_message, parse_gemini_line, parse_gemini_line_flexible, convert_raw_to_unified_message};
+use super::parser::{
+    convert_raw_to_unified_message, convert_to_unified_message, parse_gemini_line,
+    parse_gemini_line_flexible,
+};
 use super::types::{GeminiExecutionOptions, GeminiInstallStatus, GeminiProcessState};
 use crate::commands::claude::apply_no_window_async;
 
@@ -121,7 +124,11 @@ pub fn find_gemini_binary() -> Result<String, String> {
                         for ext in &executable_extensions {
                             let with_ext = format!("{}{}", path, ext);
                             if std::path::Path::new(&with_ext).exists() {
-                                log::info!("Found Gemini CLI via {} (resolved extension): {}", which_cmd, with_ext);
+                                log::info!(
+                                    "Found Gemini CLI via {} (resolved extension): {}",
+                                    which_cmd,
+                                    with_ext
+                                );
                                 return Ok(with_ext);
                             }
                         }
@@ -167,9 +174,7 @@ pub fn get_gemini_version(gemini_path: &str) -> Option<String> {
     let output = cmd.output().ok()?;
 
     if output.status.success() {
-        let version = String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .to_string();
+        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
         Some(version)
     } else {
         None
@@ -221,10 +226,7 @@ pub async fn execute_gemini(
     let config = load_gemini_config().unwrap_or_default();
 
     // Build command arguments
-    let mut args = vec![
-        "--output-format".to_string(),
-        "stream-json".to_string(),
-    ];
+    let mut args = vec!["--output-format".to_string(), "stream-json".to_string()];
 
     // Check if we're resuming a session
     // Note: Gemini CLI --resume accepts "latest" or index number (e.g. "5"), not UUID
@@ -241,7 +243,10 @@ pub async fn execute_gemini(
     args.push(model.clone());
 
     // Add approval mode
-    let approval_mode = options.approval_mode.as_ref().unwrap_or(&config.approval_mode);
+    let approval_mode = options
+        .approval_mode
+        .as_ref()
+        .unwrap_or(&config.approval_mode);
     if approval_mode == "yolo" {
         args.push("--yolo".to_string());
     } else if approval_mode != "default" {
@@ -279,7 +284,14 @@ pub async fn execute_gemini(
     }
 
     // Execute process with prompt via stdin
-    execute_gemini_process(cmd, options.project_path, model.clone(), Some(options.prompt), app_handle).await
+    execute_gemini_process(
+        cmd,
+        options.project_path,
+        model.clone(),
+        Some(options.prompt),
+        app_handle,
+    )
+    .await
 }
 
 /// Cancel a running Gemini execution
@@ -296,7 +308,10 @@ pub async fn cancel_gemini(
     if let Some(sid) = session_id {
         // Cancel specific session
         if let Some(mut child) = processes.remove(&sid) {
-            child.kill().await.map_err(|e| format!("Failed to kill process: {}", e))?;
+            child
+                .kill()
+                .await
+                .map_err(|e| format!("Failed to kill process: {}", e))?;
             log::info!("Killed Gemini process for session: {}", sid);
 
             // Emit cancellation event
@@ -425,7 +440,8 @@ async fn execute_gemini_process(
         let mut reader = BufReader::new(stdout).lines();
         let mut real_cli_session_id_emitted = false;
         // Track tool calls to enrich tool_result payloads (e.g., read_file returning empty output)
-        let mut tool_calls: std::collections::HashMap<String, (String, serde_json::Value)> = std::collections::HashMap::new();
+        let mut tool_calls: std::collections::HashMap<String, (String, serde_json::Value)> =
+            std::collections::HashMap::new();
 
         while let Ok(Some(line)) = reader.next_line().await {
             if line.trim().is_empty() {
@@ -439,14 +455,20 @@ async fn execute_gemini_process(
             let unified_message = if let Ok(mut event) = parse_gemini_line(&line) {
                 // 🔧 FIX: Check if this is an init event with real Gemini CLI session ID
                 if !real_cli_session_id_emitted {
-                    if let super::types::GeminiStreamEvent::Init { session_id: Some(ref cli_session_id), .. } = event {
+                    if let super::types::GeminiStreamEvent::Init {
+                        session_id: Some(ref cli_session_id),
+                        ..
+                    } = event
+                    {
                         // Emit the real Gemini CLI session ID to frontend
                         log::info!("[Gemini] Detected real CLI session ID: {}", cli_session_id);
                         let cli_session_payload = serde_json::json!({
                             "backend_session_id": session_id_stdout,
                             "cli_session_id": cli_session_id,
                         });
-                        if let Err(e) = app_handle_stdout.emit("gemini-cli-session-id", &cli_session_payload) {
+                        if let Err(e) =
+                            app_handle_stdout.emit("gemini-cli-session-id", &cli_session_payload)
+                        {
                             log::error!("Failed to emit gemini-cli-session-id: {}", e);
                         }
                         real_cli_session_id_emitted = true;
@@ -454,19 +476,32 @@ async fn execute_gemini_process(
                 }
 
                 // Record tool_use params for later enrichment of tool_result
-                if let super::types::GeminiStreamEvent::ToolUse { tool_name, tool_id, parameters, .. } = &event {
+                if let super::types::GeminiStreamEvent::ToolUse {
+                    tool_name,
+                    tool_id,
+                    parameters,
+                    ..
+                } = &event
+                {
                     tool_calls.insert(tool_id.clone(), (tool_name.clone(), parameters.clone()));
                 }
 
                 // Enrich tool_result with inline file content if CLI returned empty output
-                if let super::types::GeminiStreamEvent::ToolResult { tool_id, output, status: _status, .. } = &mut event {
+                if let super::types::GeminiStreamEvent::ToolResult {
+                    tool_id,
+                    output,
+                    status: _status,
+                    ..
+                } = &mut event
+                {
                     if let Some((tool_name, params)) = tool_calls.get(tool_id).cloned() {
                         let is_read_tool = {
                             let name_lower = tool_name.to_lowercase();
                             name_lower == "read" || name_lower == "read_file"
                         };
 
-                        let output_empty = output.is_null() || output.as_str().map(|s| s.is_empty()).unwrap_or(false);
+                        let output_empty = output.is_null()
+                            || output.as_str().map(|s| s.is_empty()).unwrap_or(false);
 
                         if is_read_tool && output_empty {
                             let file_path = params
@@ -488,22 +523,36 @@ async fn execute_gemini_process(
                                         log::info!("[Gemini] Filled empty tool_result output for {} from path {}", tool_id, path);
                                     }
                                     Err(err) => {
-                                        log::warn!("[Gemini] Failed to read file for tool_result {}: {}", tool_id, err);
+                                        log::warn!(
+                                            "[Gemini] Failed to read file for tool_result {}: {}",
+                                            tool_id,
+                                            err
+                                        );
                                         // Keep original empty output; frontend will handle gracefully
                                     }
                                 }
                             } else {
-                                log::warn!("[Gemini] No file_path found for tool_result {}", tool_id);
+                                log::warn!(
+                                    "[Gemini] No file_path found for tool_result {}",
+                                    tool_id
+                                );
                             }
                         }
 
                         // Optionally add status-based log for visibility
                         if output_empty && !is_read_tool {
-                            log::debug!("[Gemini] tool_result {} had empty output (tool: {})", tool_id, tool_name);
+                            log::debug!(
+                                "[Gemini] tool_result {} had empty output (tool: {})",
+                                tool_id,
+                                tool_name
+                            );
                         }
                     } else {
                         // No prior tool_use recorded; keep original
-                        log::debug!("[Gemini] tool_result {} without prior tool_use record", tool_id);
+                        log::debug!(
+                            "[Gemini] tool_result {} without prior tool_use record",
+                            tool_id
+                        );
                     }
                 }
 
@@ -512,13 +561,19 @@ async fn execute_gemini_process(
                 // 🔧 FIX: Also check raw JSON for init event with session_id
                 if !real_cli_session_id_emitted {
                     if raw.get("type").and_then(|t| t.as_str()) == Some("init") {
-                        if let Some(cli_session_id) = raw.get("session_id").and_then(|s| s.as_str()) {
-                            log::info!("[Gemini] Detected real CLI session ID (raw): {}", cli_session_id);
+                        if let Some(cli_session_id) = raw.get("session_id").and_then(|s| s.as_str())
+                        {
+                            log::info!(
+                                "[Gemini] Detected real CLI session ID (raw): {}",
+                                cli_session_id
+                            );
                             let cli_session_payload = serde_json::json!({
                                 "backend_session_id": session_id_stdout,
                                 "cli_session_id": cli_session_id,
                             });
-                            if let Err(e) = app_handle_stdout.emit("gemini-cli-session-id", &cli_session_payload) {
+                            if let Err(e) = app_handle_stdout
+                                .emit("gemini-cli-session-id", &cli_session_payload)
+                            {
                                 log::error!("Failed to emit gemini-cli-session-id: {}", e);
                             }
                             real_cli_session_id_emitted = true;
@@ -583,10 +638,8 @@ async fn execute_gemini_process(
 
                 let error_line = serde_json::to_string(&error_message).unwrap_or(line.clone());
 
-                let _ = app_handle_stderr.emit(
-                    &format!("gemini-error:{}", session_id_stderr),
-                    &error_line,
-                );
+                let _ = app_handle_stderr
+                    .emit(&format!("gemini-error:{}", session_id_stderr), &error_line);
                 let _ = app_handle_stderr.emit("gemini-error", &error_line);
             }
         }
@@ -604,7 +657,10 @@ async fn execute_gemini_process(
     tokio::spawn(async move {
         // Wait for both stdout and stderr to close
         let _ = tokio::join!(stdout_done_rx, stderr_done_rx);
-        log::info!("[Gemini] Both stdout and stderr closed for session: {}", session_id_complete);
+        log::info!(
+            "[Gemini] Both stdout and stderr closed for session: {}",
+            session_id_complete
+        );
 
         // After streams close, give process up to 30 seconds to exit gracefully
         let timeout_duration = tokio::time::Duration::from_secs(30);
@@ -615,9 +671,13 @@ async fn execute_gemini_process(
             if let Some(mut child) = processes.remove(&session_id_complete) {
                 child.wait().await
             } else {
-                Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Process not found"))
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Process not found",
+                ))
             }
-        }).await;
+        })
+        .await;
 
         let (success, exit_code) = match wait_result {
             Ok(Ok(status)) => {
@@ -670,10 +730,8 @@ async fn execute_gemini_process(
         );
         let _ = app_handle_complete.emit("gemini-output", &complete_line);
 
-        let _ = app_handle_complete.emit(
-            &format!("gemini-complete:{}", session_id_complete),
-            success,
-        );
+        let _ =
+            app_handle_complete.emit(&format!("gemini-complete:{}", session_id_complete), success);
         let _ = app_handle_complete.emit("gemini-complete", success);
     });
 

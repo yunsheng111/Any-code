@@ -1,3 +1,4 @@
+use chrono::Utc;
 /**
  * Codex Git Operations Module
  *
@@ -7,16 +8,16 @@
  * - Rewind capabilities checking
  * - Session truncation and revert operations
  */
-
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::fs;
-use chrono::Utc;
+use std::path::PathBuf;
 
 // Import simple_git for rewind operations
 use super::super::simple_git;
 // Import rewind helpers/types shared with Claude
-use super::super::prompt_tracker::{RewindMode, RewindCapabilities, PromptRecord as ClaudePromptRecord, load_execution_config};
+use super::super::prompt_tracker::{
+    load_execution_config, PromptRecord as ClaudePromptRecord, RewindCapabilities, RewindMode,
+};
 // Import WSL utilities
 use super::super::wsl_utils;
 // Import session helpers
@@ -65,8 +66,7 @@ pub struct CodexGitRecords {
 
 /// Get the Codex git records directory
 pub fn get_codex_git_records_dir() -> Result<PathBuf, String> {
-    let home_dir = dirs::home_dir()
-        .ok_or_else(|| "Failed to get home directory".to_string())?;
+    let home_dir = dirs::home_dir().ok_or_else(|| "Failed to get home directory".to_string())?;
 
     let records_dir = home_dir.join(".codex").join("git-records");
 
@@ -95,8 +95,7 @@ pub fn get_codex_sessions_dir() -> Result<PathBuf, String> {
     }
 
     // Native mode: use local home directory
-    let home_dir = dirs::home_dir()
-        .ok_or_else(|| "Failed to get home directory".to_string())?;
+    let home_dir = dirs::home_dir().ok_or_else(|| "Failed to get home directory".to_string())?;
 
     Ok(home_dir.join(".codex").join("sessions"))
 }
@@ -121,8 +120,7 @@ pub fn load_codex_git_records(session_id: &str) -> Result<CodexGitRecords, Strin
     let content = fs::read_to_string(&records_file)
         .map_err(|e| format!("Failed to read git records: {}", e))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse git records: {}", e))
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse git records: {}", e))
 }
 
 /// Save Git records for a Codex session
@@ -133,8 +131,7 @@ pub fn save_codex_git_records(session_id: &str, records: &CodexGitRecords) -> Re
     let content = serde_json::to_string_pretty(records)
         .map_err(|e| format!("Failed to serialize git records: {}", e))?;
 
-    fs::write(&records_file, content)
-        .map_err(|e| format!("Failed to write git records: {}", e))?;
+    fs::write(&records_file, content).map_err(|e| format!("Failed to write git records: {}", e))?;
 
     log::debug!("Saved Codex git records for session: {}", session_id);
     Ok(())
@@ -145,10 +142,15 @@ pub fn truncate_codex_git_records(session_id: &str, prompt_index: usize) -> Resu
     let mut git_records = load_codex_git_records(session_id)?;
 
     // Keep only records up to and including prompt_index
-    git_records.records.retain(|r| r.prompt_index <= prompt_index);
+    git_records
+        .records
+        .retain(|r| r.prompt_index <= prompt_index);
 
     save_codex_git_records(session_id, &git_records)?;
-    log::info!("[Codex Rewind] Truncated git records after prompt #{}", prompt_index);
+    log::info!(
+        "[Codex Rewind] Truncated git records after prompt #{}",
+        prompt_index
+    );
 
     Ok(())
 }
@@ -265,8 +267,8 @@ pub async fn check_codex_rewind_capabilities(
     );
 
     // Respect global execution config for git operations
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
     let git_operations_disabled = execution_config.disable_rewind_git_operations;
 
     // Extract prompts to validate index and source
@@ -280,7 +282,9 @@ pub async fn check_codex_rewind_capabilities(
             conversation: true,
             code: false,
             both: false,
-            warning: Some("Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".to_string()),
+            warning: Some(
+                "Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".to_string(),
+            ),
             source: prompt.source.clone(),
         });
     }
@@ -330,8 +334,8 @@ pub fn get_codex_prompt_text(session_id: &str, prompt_index: usize) -> Result<St
         .ok_or_else(|| format!("Session file not found for: {}", session_id))?;
 
     use std::io::{BufRead, BufReader};
-    let file = fs::File::open(&session_file)
-        .map_err(|e| format!("Failed to open session file: {}", e))?;
+    let file =
+        fs::File::open(&session_file).map_err(|e| format!("Failed to open session file: {}", e))?;
 
     let reader = BufReader::new(file);
     let mut user_message_count = 0;
@@ -354,7 +358,8 @@ pub fn get_codex_prompt_text(session_id: &str, prompt_index: usize) -> Result<St
                                         // Skip system messages
                                         if !text.contains("<environment_context>")
                                             && !text.contains("# AGENTS.md instructions")
-                                            && !text.is_empty() {
+                                            && !text.is_empty()
+                                        {
                                             return Ok(text.to_string());
                                         }
                                     }
@@ -372,7 +377,10 @@ pub fn get_codex_prompt_text(session_id: &str, prompt_index: usize) -> Result<St
 }
 
 /// Truncate Codex session file to before a specific prompt
-pub fn truncate_codex_session_to_prompt(session_id: &str, prompt_index: usize) -> Result<(), String> {
+pub fn truncate_codex_session_to_prompt(
+    session_id: &str,
+    prompt_index: usize,
+) -> Result<(), String> {
     let sessions_dir = get_codex_sessions_dir()?;
     let session_file = find_session_file(&sessions_dir, session_id)
         .ok_or_else(|| format!("Session file not found for: {}", session_id))?;
@@ -434,8 +442,12 @@ pub fn truncate_codex_session_to_prompt(session_id: &str, prompt_index: usize) -
         return Err(format!("Prompt #{} not found in session", prompt_index));
     }
 
-    log::info!("[Codex Rewind] Total lines: {}, truncating at line {} (prompt #{})",
-        total_lines, truncate_at_line, prompt_index);
+    log::info!(
+        "[Codex Rewind] Total lines: {}, truncating at line {} (prompt #{})",
+        total_lines,
+        truncate_at_line,
+        prompt_index
+    );
 
     // Truncate to the line before this prompt
     let truncated_lines: Vec<&str> = lines.into_iter().take(truncate_at_line).collect();
@@ -449,8 +461,11 @@ pub fn truncate_codex_session_to_prompt(session_id: &str, prompt_index: usize) -
     fs::write(&session_file, new_content)
         .map_err(|e| format!("Failed to write truncated session: {}", e))?;
 
-    log::info!("[Codex Rewind] Truncated session: kept {} lines, deleted {} lines",
-        truncate_at_line, total_lines - truncate_at_line);
+    log::info!(
+        "[Codex Rewind] Truncated session: kept {} lines, deleted {} lines",
+        truncate_at_line,
+        total_lines - truncate_at_line
+    );
 
     Ok(())
 }
@@ -466,18 +481,24 @@ pub async fn record_codex_prompt_sent(
     project_path: String,
     _prompt_text: String,
 ) -> Result<usize, String> {
-    log::info!("[Codex Record] Recording prompt sent for session: {}", session_id);
+    log::info!(
+        "[Codex Record] Recording prompt sent for session: {}",
+        session_id
+    );
 
     // Check if Git operations are disabled in config
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     if execution_config.disable_rewind_git_operations {
         log::info!("[Codex Record] Git operations disabled, skipping git record");
         // Still need to return a prompt_index for tracking purposes
         let git_records = load_codex_git_records(&session_id)?;
         let prompt_index = git_records.records.len();
-        log::info!("[Codex Record] Returning prompt index #{} (no git record)", prompt_index);
+        log::info!(
+            "[Codex Record] Returning prompt index #{} (no git record)",
+            prompt_index
+        );
         return Ok(prompt_index);
     }
 
@@ -511,8 +532,11 @@ pub async fn record_codex_prompt_sent(
     git_records.records.push(record);
     save_codex_git_records(&session_id, &git_records)?;
 
-    log::info!("[Codex Record] Recorded prompt #{} with commit_before: {}",
-        prompt_index, &commit_before[..8.min(commit_before.len())]);
+    log::info!(
+        "[Codex Record] Recorded prompt #{} with commit_before: {}",
+        prompt_index,
+        &commit_before[..8.min(commit_before.len())]
+    );
 
     Ok(prompt_index)
 }
@@ -524,12 +548,15 @@ pub async fn record_codex_prompt_completed(
     project_path: String,
     prompt_index: usize,
 ) -> Result<(), String> {
-    log::info!("[Codex Record] Recording prompt #{} completed for session: {}",
-        prompt_index, session_id);
+    log::info!(
+        "[Codex Record] Recording prompt #{} completed for session: {}",
+        prompt_index,
+        session_id
+    );
 
     // Check if Git operations are disabled in config
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     if execution_config.disable_rewind_git_operations {
         log::info!("[Codex Record] Git operations disabled, skipping git commit and record update");
@@ -540,10 +567,16 @@ pub async fn record_codex_prompt_completed(
     let commit_message = format!("[Codex] After prompt #{}", prompt_index);
     match simple_git::git_commit_changes(&project_path, &commit_message) {
         Ok(true) => {
-            log::info!("[Codex Record] Auto-committed changes after prompt #{}", prompt_index);
+            log::info!(
+                "[Codex Record] Auto-committed changes after prompt #{}",
+                prompt_index
+            );
         }
         Ok(false) => {
-            log::debug!("[Codex Record] No changes to commit after prompt #{}", prompt_index);
+            log::debug!(
+                "[Codex Record] No changes to commit after prompt #{}",
+                prompt_index
+            );
         }
         Err(e) => {
             log::warn!("[Codex Record] Failed to auto-commit: {}", e);
@@ -558,14 +591,24 @@ pub async fn record_codex_prompt_completed(
     // Update the record
     let mut git_records = load_codex_git_records(&session_id)?;
 
-    if let Some(record) = git_records.records.iter_mut().find(|r| r.prompt_index == prompt_index) {
+    if let Some(record) = git_records
+        .records
+        .iter_mut()
+        .find(|r| r.prompt_index == prompt_index)
+    {
         record.commit_after = Some(commit_after.clone());
         save_codex_git_records(&session_id, &git_records)?;
 
-        log::info!("[Codex Record] Updated prompt #{} with commit_after: {}",
-            prompt_index, &commit_after[..8.min(commit_after.len())]);
+        log::info!(
+            "[Codex Record] Updated prompt #{} with commit_after: {}",
+            prompt_index,
+            &commit_after[..8.min(commit_after.len())]
+        );
     } else {
-        log::warn!("[Codex Record] Record not found for prompt #{}", prompt_index);
+        log::warn!(
+            "[Codex Record] Record not found for prompt #{}",
+            prompt_index
+        );
     }
 
     Ok(())
@@ -583,12 +626,16 @@ pub async fn revert_codex_to_prompt(
     prompt_index: usize,
     mode: RewindMode,
 ) -> Result<String, String> {
-    log::info!("[Codex Rewind] Reverting session {} to prompt #{} with mode: {:?}",
-        session_id, prompt_index, mode);
+    log::info!(
+        "[Codex Rewind] Reverting session {} to prompt #{} with mode: {:?}",
+        session_id,
+        prompt_index,
+        mode
+    );
 
     // Load execution config to check if Git operations are disabled
-    let execution_config = load_execution_config()
-        .map_err(|e| format!("Failed to load execution config: {}", e))?;
+    let execution_config =
+        load_execution_config().map_err(|e| format!("Failed to load execution config: {}", e))?;
 
     let git_operations_disabled = execution_config.disable_rewind_git_operations;
 
@@ -604,14 +651,18 @@ pub async fn revert_codex_to_prompt(
 
     // Load Git records
     let git_records = load_codex_git_records(&session_id)?;
-    let git_record = git_records.records.iter().find(|r| r.prompt_index == prompt_index);
+    let git_record = git_records
+        .records
+        .iter()
+        .find(|r| r.prompt_index == prompt_index);
 
     // Validate mode compatibility
     match mode {
         RewindMode::CodeOnly | RewindMode::Both => {
             if git_operations_disabled {
                 return Err(
-                    "无法回滚代码：Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。".into()
+                    "无法回滚代码：Git 操作已在配置中禁用。只能撤回对话历史，无法回滚代码变更。"
+                        .into(),
                 );
             }
             if git_record.is_none() {
@@ -637,7 +688,10 @@ pub async fn revert_codex_to_prompt(
                 truncate_codex_git_records(&session_id, prompt_index)?;
             }
 
-            log::info!("[Codex Rewind] Successfully reverted conversation to prompt #{}", prompt_index);
+            log::info!(
+                "[Codex Rewind] Successfully reverted conversation to prompt #{}",
+                prompt_index
+            );
         }
 
         RewindMode::CodeOnly => {
@@ -646,15 +700,23 @@ pub async fn revert_codex_to_prompt(
             let record = git_record.unwrap();
 
             // Stash uncommitted changes
-            simple_git::git_stash_save(&project_path,
-                &format!("Auto-stash before Codex code revert to prompt #{}", prompt_index))
-                .map_err(|e| format!("Failed to stash changes: {}", e))?;
+            simple_git::git_stash_save(
+                &project_path,
+                &format!(
+                    "Auto-stash before Codex code revert to prompt #{}",
+                    prompt_index
+                ),
+            )
+            .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
             // Reset to commit before this prompt
             simple_git::git_reset_hard(&project_path, &record.commit_before)
                 .map_err(|e| format!("Failed to reset code: {}", e))?;
 
-            log::info!("[Codex Rewind] Successfully reverted code to prompt #{}", prompt_index);
+            log::info!(
+                "[Codex Rewind] Successfully reverted code to prompt #{}",
+                prompt_index
+            );
         }
 
         RewindMode::Both => {
@@ -663,9 +725,14 @@ pub async fn revert_codex_to_prompt(
             let record = git_record.unwrap();
 
             // Stash uncommitted changes
-            simple_git::git_stash_save(&project_path,
-                &format!("Auto-stash before Codex full revert to prompt #{}", prompt_index))
-                .map_err(|e| format!("Failed to stash changes: {}", e))?;
+            simple_git::git_stash_save(
+                &project_path,
+                &format!(
+                    "Auto-stash before Codex full revert to prompt #{}",
+                    prompt_index
+                ),
+            )
+            .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
             // Reset code
             simple_git::git_reset_hard(&project_path, &record.commit_before)
@@ -679,7 +746,10 @@ pub async fn revert_codex_to_prompt(
                 truncate_codex_git_records(&session_id, prompt_index)?;
             }
 
-            log::info!("[Codex Rewind] Successfully reverted both to prompt #{}", prompt_index);
+            log::info!(
+                "[Codex Rewind] Successfully reverted both to prompt #{}",
+                prompt_index
+            );
         }
     }
 

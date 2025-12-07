@@ -1,9 +1,9 @@
 //! Windows-specific platform implementations
 
 use std::fs;
+use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::os::windows::process::CommandExt;
 
 /// Resolve a .cmd wrapper file to its actual Node.js script path
 ///
@@ -45,7 +45,8 @@ pub fn resolve_cmd_wrapper(cmd_path: &str) -> Option<(String, String)> {
 
                     // Convert %~dp0 to absolute path
                     if let Some(parent) = Path::new(cmd_path).parent() {
-                        let script_path = parent.join(script_relative).to_string_lossy().to_string();
+                        let script_path =
+                            parent.join(script_relative).to_string_lossy().to_string();
 
                         // Verify the script exists
                         if PathBuf::from(&script_path).exists() {

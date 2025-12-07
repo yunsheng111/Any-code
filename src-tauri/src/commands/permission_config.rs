@@ -135,10 +135,7 @@ pub fn build_permission_args(config: &ClaudePermissionConfig) -> Vec<String> {
 /// 执行参数构建函数
 /// 注意：prompt 不再通过命令行参数传递，而是通过 stdin 管道传递
 /// 这样可以避免操作系统命令行长度限制（Windows ~8KB, Linux/macOS ~128KB-2MB）
-pub fn build_execution_args(
-    config: &ClaudeExecutionConfig,
-    model: &str,
-) -> Vec<String> {
+pub fn build_execution_args(config: &ClaudeExecutionConfig, model: &str) -> Vec<String> {
     let mut args = Vec::new();
 
     // prompt 通过 stdin 传递，不再作为命令行参数

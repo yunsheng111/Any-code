@@ -47,7 +47,11 @@ pub fn parse_gemini_line_flexible(line: &str) -> Result<Value, String> {
 /// This allows the frontend to render Gemini output using existing components
 pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
     match event {
-        GeminiStreamEvent::Init { session_id, model, timestamp } => {
+        GeminiStreamEvent::Init {
+            session_id,
+            model,
+            timestamp,
+        } => {
             json!({
                 "type": "system",
                 "subtype": "init",
@@ -61,8 +65,17 @@ pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
             })
         }
 
-        GeminiStreamEvent::Message { role, content, delta, timestamp } => {
-            let msg_type = if role == "assistant" { "assistant" } else { "user" };
+        GeminiStreamEvent::Message {
+            role,
+            content,
+            delta,
+            timestamp,
+        } => {
+            let msg_type = if role == "assistant" {
+                "assistant"
+            } else {
+                "user"
+            };
             json!({
                 "type": msg_type,
                 "message": {
@@ -81,7 +94,12 @@ pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
             })
         }
 
-        GeminiStreamEvent::ToolUse { tool_name, tool_id, parameters, timestamp } => {
+        GeminiStreamEvent::ToolUse {
+            tool_name,
+            tool_id,
+            parameters,
+            timestamp,
+        } => {
             json!({
                 "type": "assistant",
                 "message": {
@@ -103,7 +121,12 @@ pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
             })
         }
 
-        GeminiStreamEvent::ToolResult { tool_id, status, output, timestamp } => {
+        GeminiStreamEvent::ToolResult {
+            tool_id,
+            status,
+            output,
+            timestamp,
+        } => {
             let output_value = if output.is_null() {
                 Value::Null
             } else {
@@ -131,7 +154,11 @@ pub fn convert_to_unified_message(event: &GeminiStreamEvent) -> Value {
             })
         }
 
-        GeminiStreamEvent::Error { error_type, message, code } => {
+        GeminiStreamEvent::Error {
+            error_type,
+            message,
+            code,
+        } => {
             json!({
                 "type": "system",
                 "subtype": "error",
@@ -191,7 +218,10 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
                 });
             }
             "message" => {
-                let role = raw.get("role").and_then(|r| r.as_str()).unwrap_or("assistant");
+                let role = raw
+                    .get("role")
+                    .and_then(|r| r.as_str())
+                    .unwrap_or("assistant");
                 let content = raw.get("content").and_then(|c| c.as_str()).unwrap_or("");
                 return json!({
                     "type": if role == "assistant" { "assistant" } else { "user" },
@@ -235,7 +265,10 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
             }
             "tool_result" => {
                 let tool_id = raw.get("tool_id").and_then(|t| t.as_str()).unwrap_or("");
-                let status = raw.get("status").and_then(|s| s.as_str()).unwrap_or("unknown");
+                let status = raw
+                    .get("status")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("unknown");
                 // output 保留原始结构，兼容 functionResponse 等复杂结果
                 let output = raw
                     .get("output")
@@ -314,7 +347,10 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
         });
     }
 
-    if let Some(func_resp) = raw.get("functionResponse").or_else(|| raw.get("function_response")) {
+    if let Some(func_resp) = raw
+        .get("functionResponse")
+        .or_else(|| raw.get("function_response"))
+    {
         let tool_id = func_resp
             .get("id")
             .or_else(|| raw.get("callId"))
@@ -365,7 +401,10 @@ pub fn convert_raw_to_unified_message(raw: &Value) -> Value {
 
 /// Extract usage information from a Gemini result event
 pub fn extract_usage(event: &GeminiStreamEvent) -> Option<(u64, u64)> {
-    if let GeminiStreamEvent::Result { stats: Some(stats), .. } = event {
+    if let GeminiStreamEvent::Result {
+        stats: Some(stats), ..
+    } = event
+    {
         let input = stats.input_tokens.unwrap_or(0);
         let output = stats.output_tokens.unwrap_or(0);
         Some((input, output))
@@ -376,7 +415,11 @@ pub fn extract_usage(event: &GeminiStreamEvent) -> Option<(u64, u64)> {
 
 /// Extract session ID from an init event
 pub fn extract_session_id(event: &GeminiStreamEvent) -> Option<String> {
-    if let GeminiStreamEvent::Init { session_id: Some(id), .. } = event {
+    if let GeminiStreamEvent::Init {
+        session_id: Some(id),
+        ..
+    } = event
+    {
         Some(id.clone())
     } else {
         None
@@ -396,7 +439,10 @@ mod tests {
         let line = r#"{"type":"init","timestamp":"2025-01-01T00:00:00.000Z","session_id":"abc123","model":"gemini-2.5-pro"}"#;
         let event = parse_gemini_line(line).unwrap();
 
-        if let GeminiStreamEvent::Init { session_id, model, .. } = event {
+        if let GeminiStreamEvent::Init {
+            session_id, model, ..
+        } = event
+        {
             assert_eq!(session_id, Some("abc123".to_string()));
             assert_eq!(model, Some("gemini-2.5-pro".to_string()));
         } else {
@@ -409,7 +455,13 @@ mod tests {
         let line = r#"{"type":"message","role":"assistant","content":"Hello!","delta":true,"timestamp":"2025-01-01T00:00:01.000Z"}"#;
         let event = parse_gemini_line(line).unwrap();
 
-        if let GeminiStreamEvent::Message { role, content, delta, .. } = event {
+        if let GeminiStreamEvent::Message {
+            role,
+            content,
+            delta,
+            ..
+        } = event
+        {
             assert_eq!(role, "assistant");
             assert_eq!(content, "Hello!");
             assert!(delta);

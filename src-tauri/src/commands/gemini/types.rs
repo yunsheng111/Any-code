@@ -74,25 +74,70 @@ impl GeminiStreamEvent {
 
         match event_type {
             "init" => Some(Self::Init {
-                session_id: value.get("session_id").and_then(|v| v.as_str()).map(String::from),
-                model: value.get("model").and_then(|v| v.as_str()).map(String::from),
-                timestamp: value.get("timestamp").and_then(|v| v.as_str()).map(String::from),
+                session_id: value
+                    .get("session_id")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
+                model: value
+                    .get("model")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
+                timestamp: value
+                    .get("timestamp")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
             }),
             "message" => Some(Self::Message {
-                role: value.get("role").and_then(|v| v.as_str()).unwrap_or("assistant").to_string(),
-                content: value.get("content").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                delta: value.get("delta").and_then(|v| v.as_bool()).unwrap_or(false),
-                timestamp: value.get("timestamp").and_then(|v| v.as_str()).map(String::from),
+                role: value
+                    .get("role")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("assistant")
+                    .to_string(),
+                content: value
+                    .get("content")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                delta: value
+                    .get("delta")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false),
+                timestamp: value
+                    .get("timestamp")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
             }),
             "tool_use" => Some(Self::ToolUse {
-                tool_name: value.get("tool_name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                tool_id: value.get("tool_id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                parameters: value.get("parameters").cloned().unwrap_or(serde_json::Value::Null),
-                timestamp: value.get("timestamp").and_then(|v| v.as_str()).map(String::from),
+                tool_name: value
+                    .get("tool_name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                tool_id: value
+                    .get("tool_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                parameters: value
+                    .get("parameters")
+                    .cloned()
+                    .unwrap_or(serde_json::Value::Null),
+                timestamp: value
+                    .get("timestamp")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
             }),
             "tool_result" => Some(Self::ToolResult {
-                tool_id: value.get("tool_id").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                status: value.get("status").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+                tool_id: value
+                    .get("tool_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                status: value
+                    .get("status")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
                 // output 可能是字符串或对象，需要完整保留结构以便前端渲染（如 functionResponse）
                 output: value
                     .get("output")
@@ -100,16 +145,33 @@ impl GeminiStreamEvent {
                     // 一些 Gemini 变体会把结果放在 response 字段
                     .or_else(|| value.get("response").cloned())
                     .unwrap_or(Value::Null),
-                timestamp: value.get("timestamp").and_then(|v| v.as_str()).map(String::from),
+                timestamp: value
+                    .get("timestamp")
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
             }),
             "error" => Some(Self::Error {
-                error_type: value.get("error_type").or(value.get("type")).and_then(|v| v.as_str()).map(String::from),
-                message: value.get("message").and_then(|v| v.as_str()).unwrap_or("Unknown error").to_string(),
+                error_type: value
+                    .get("error_type")
+                    .or(value.get("type"))
+                    .and_then(|v| v.as_str())
+                    .map(String::from),
+                message: value
+                    .get("message")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Unknown error")
+                    .to_string(),
                 code: value.get("code").and_then(|v| v.as_i64()).map(|n| n as i32),
             }),
             "result" => Some(Self::Result {
-                status: value.get("status").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                stats: value.get("stats").and_then(|v| serde_json::from_value(v.clone()).ok()),
+                status: value
+                    .get("status")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                stats: value
+                    .get("stats")
+                    .and_then(|v| serde_json::from_value(v.clone()).ok()),
             }),
             _ => None,
         }

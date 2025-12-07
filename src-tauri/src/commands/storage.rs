@@ -24,9 +24,9 @@ pub fn init_database(app: &AppHandle) -> SqliteResult<Connection> {
     // PRAGMA 语句会返回结果，需要使用 pragma_update 或 query_row
     conn.pragma_update(None, "journal_mode", "WAL")?;
     conn.pragma_update(None, "synchronous", "NORMAL")?;
-    conn.pragma_update(None, "cache_size", 10000)?;  // 10MB 缓存
+    conn.pragma_update(None, "cache_size", 10000)?; // 10MB 缓存
     conn.pragma_update(None, "temp_store", "MEMORY")?;
-    conn.pragma_update(None, "mmap_size", 30000000000i64)?;  // 30GB memory-mapped I/O
+    conn.pragma_update(None, "mmap_size", 30000000000i64)?; // 30GB memory-mapped I/O
 
     log::info!("✅ SQLite WAL mode enabled with performance optimizations");
 
@@ -664,7 +664,9 @@ pub struct IndexInfo {
 
 /// Get database performance statistics
 #[tauri::command]
-pub async fn storage_get_performance_stats(db: State<'_, AgentDb>) -> Result<DatabaseStats, String> {
+pub async fn storage_get_performance_stats(
+    db: State<'_, AgentDb>,
+) -> Result<DatabaseStats, String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
 
     // Get total tables
@@ -730,11 +732,9 @@ pub async fn storage_get_performance_stats(db: State<'_, AgentDb>) -> Result<Dat
 
             // Get index columns
             let columns = conn
-                .query_row(
-                    &format!("PRAGMA index_info({})", name),
-                    [],
-                    |row| row.get::<_, String>(2),
-                )
+                .query_row(&format!("PRAGMA index_info({})", name), [], |row| {
+                    row.get::<_, String>(2)
+                })
                 .unwrap_or_else(|_| "unknown".to_string());
 
             Ok(IndexInfo {

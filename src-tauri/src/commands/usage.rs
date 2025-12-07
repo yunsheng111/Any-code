@@ -84,11 +84,11 @@ struct ModelPricing {
 /// Model family enumeration for categorization
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum ModelFamily {
-    Opus45,      // Claude 4.5 Opus
-    Opus41,      // Claude 4.1 Opus
-    Sonnet45,    // Claude 4.5 Sonnet
-    Haiku45,     // Claude 4.5 Haiku
-    Unknown,     // Unknown model
+    Opus45,   // Claude 4.5 Opus
+    Opus41,   // Claude 4.1 Opus
+    Sonnet45, // Claude 4.5 Sonnet
+    Haiku45,  // Claude 4.5 Haiku
+    Unknown,  // Unknown model
 }
 
 impl ModelPricing {
@@ -226,7 +226,10 @@ fn calculate_cost(model: &str, usage: &UsageData) -> f64 {
 
     // Log unrecognized models for debugging
     if family == ModelFamily::Unknown {
-        log::warn!("Unknown model detected: '{}'. Cost calculation will return 0.", model);
+        log::warn!(
+            "Unknown model detected: '{}'. Cost calculation will return 0.",
+            model
+        );
     }
 
     // Calculate cost (prices are per million tokens)
@@ -478,7 +481,8 @@ pub fn get_usage_stats(days: Option<u32>) -> Result<UsageStats, String> {
             dt.with_timezone(&Local).format("%Y-%m-%d").to_string()
         } else {
             // 降级：直接从字符串提取（可能不准确）
-            entry.timestamp
+            entry
+                .timestamp
                 .split('T')
                 .next()
                 .unwrap_or(&entry.timestamp)
@@ -654,7 +658,8 @@ pub fn get_usage_by_date_range(start_date: String, end_date: String) -> Result<U
             dt.with_timezone(&Local).format("%Y-%m-%d").to_string()
         } else {
             // 降级：直接从字符串提取（可能不准确）
-            entry.timestamp
+            entry
+                .timestamp
                 .split('T')
                 .next()
                 .unwrap_or(&entry.timestamp)

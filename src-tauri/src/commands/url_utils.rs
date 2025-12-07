@@ -82,7 +82,10 @@ fn normalize_openai_url(url: &str) -> String {
     // 检查是否只包含 /v1
     if url.ends_with(V1_SUFFIX) {
         let result = format!("{}{}", url, OPENAI_COMPLETIONS_SUFFIX);
-        debug!("OpenAI URL with /v1, appending /chat/completions: {}", result);
+        debug!(
+            "OpenAI URL with /v1, appending /chat/completions: {}",
+            result
+        );
         return result;
     }
 
@@ -212,7 +215,10 @@ mod tests {
     #[test]
     fn test_normalize_openai_url_already_complete() {
         assert_eq!(
-            normalize_api_url("http://localhost:3001/v1/chat/completions", ApiEndpointType::OpenAI),
+            normalize_api_url(
+                "http://localhost:3001/v1/chat/completions",
+                ApiEndpointType::OpenAI
+            ),
             "http://localhost:3001/v1/chat/completions"
         );
     }
@@ -236,7 +242,10 @@ mod tests {
     #[test]
     fn test_normalize_anthropic_url_already_complete() {
         assert_eq!(
-            normalize_api_url("http://localhost:3001/v1/messages", ApiEndpointType::Anthropic),
+            normalize_api_url(
+                "http://localhost:3001/v1/messages",
+                ApiEndpointType::Anthropic
+            ),
             "http://localhost:3001/v1/messages"
         );
     }
@@ -302,12 +311,30 @@ mod tests {
 
     #[test]
     fn test_needs_normalization() {
-        assert!(needs_normalization("http://localhost:3001", ApiEndpointType::OpenAI));
-        assert!(needs_normalization("http://localhost:3001/v1", ApiEndpointType::OpenAI));
-        assert!(!needs_normalization("http://localhost:3001/v1/chat/completions", ApiEndpointType::OpenAI));
+        assert!(needs_normalization(
+            "http://localhost:3001",
+            ApiEndpointType::OpenAI
+        ));
+        assert!(needs_normalization(
+            "http://localhost:3001/v1",
+            ApiEndpointType::OpenAI
+        ));
+        assert!(!needs_normalization(
+            "http://localhost:3001/v1/chat/completions",
+            ApiEndpointType::OpenAI
+        ));
 
-        assert!(needs_normalization("http://localhost:3001", ApiEndpointType::Anthropic));
-        assert!(needs_normalization("http://localhost:3001/v1", ApiEndpointType::Anthropic));
-        assert!(!needs_normalization("http://localhost:3001/v1/messages", ApiEndpointType::Anthropic));
+        assert!(needs_normalization(
+            "http://localhost:3001",
+            ApiEndpointType::Anthropic
+        ));
+        assert!(needs_normalization(
+            "http://localhost:3001/v1",
+            ApiEndpointType::Anthropic
+        ));
+        assert!(!needs_normalization(
+            "http://localhost:3001/v1/messages",
+            ApiEndpointType::Anthropic
+        ));
     }
 }
