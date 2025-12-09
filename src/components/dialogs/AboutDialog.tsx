@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AboutDialogProps {
   open: boolean;
@@ -19,7 +20,8 @@ interface AboutDialogProps {
 }
 
 export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) {
-  const [appVersion, setAppVersion] = useState<string>("加载中...");
+  const { t } = useTranslation();
+  const [appVersion, setAppVersion] = useState<string>(t('messages.loading'));
   const PROJECT_URL = "https://github.com/anyme123/Any-code";
 
   // 动态获取应用版本号
@@ -29,8 +31,8 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
         const version = await getVersion();
         setAppVersion(version);
       } catch (err) {
-        console.error("获取版本号失败:", err);
-        setAppVersion("未知");
+        console.error("Failed to get version:", err);
+        setAppVersion(t('dialogs.unknown'));
       }
     };
 
@@ -43,7 +45,7 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
     try {
       await openUrl(PROJECT_URL);
     } catch (err) {
-      console.error("打开项目地址失败:", err);
+      console.error(t('dialogs.openProjectPageFailed'), err);
     }
   };
 
@@ -56,7 +58,7 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
           </div>
           <DialogTitle className="text-xl">Any Code</DialogTitle>
           <DialogDescription className="flex items-center justify-center gap-2">
-            <span>版本:</span>
+            <span>{t('about.version')}:</span>
             <span className="font-mono font-semibold text-primary">
               v{appVersion}
             </span>
@@ -66,8 +68,7 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
         {/* Description */}
         <div className="p-4 bg-muted/50 rounded-lg">
           <p className="text-sm text-muted-foreground text-center">
-            Any Code 是一个强大的 Claude Code 会话管理工具，
-            帮助您更好地组织和管理 Claude 对话。
+            {t('about.description')}
           </p>
         </div>
 
@@ -79,7 +80,7 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
             className="w-full"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
-            检查更新
+            {t('about.checkUpdate')}
           </Button>
 
           <Button
@@ -88,7 +89,7 @@ export function AboutDialog({ open, onClose, onCheckUpdate }: AboutDialogProps) 
             className="w-full"
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            访问项目地址
+            {t('about.visitProject')}
           </Button>
         </DialogFooter>
 

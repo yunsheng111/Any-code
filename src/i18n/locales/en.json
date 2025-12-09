@@ -1216,6 +1216,28 @@
     "unknown": "Unknown",
     "openProjectPageFailed": "Failed to open project page"
   },
+  "deletedProjects": {
+    "title": "Deleted Projects",
+    "description": "These projects are hidden but files are still preserved. You can restore them or delete permanently.",
+    "noDeletedProjects": "No deleted projects",
+    "deletedProjectsInfo": "When you delete projects, they will appear here for recovery",
+    "deleted": "Deleted",
+    "oldFormat": "Old Format",
+    "restoreProject": "Restore project",
+    "restore": "Restore",
+    "permanentlyDelete": "Permanently Delete",
+    "confirmPermanentDelete": "Permanently delete project?",
+    "permanentDeleteWarning": "This will permanently delete the project and all its files. This action cannot be undone.",
+    "projectRestored": "Project successfully restored",
+    "projectPermanentlyDeleted": "Project permanently deleted",
+    "deleteFailed": "Delete failed: {{error}}"
+  },
+  "about": {
+    "version": "Version",
+    "description": "Any Code is a powerful Claude Code session management tool that helps you better organize and manage Claude conversations.",
+    "checkUpdate": "Check for Updates",
+    "visitProject": "Visit Project"
+  },
   "codexEditor": {
     "codexDirNotFound": "Codex directory not found. Please ensure Codex CLI is installed.",
     "cannotLoadAgents": "Cannot load AGENTS.md file",

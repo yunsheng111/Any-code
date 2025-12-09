@@ -1248,6 +1248,28 @@
     "unknown": "未知",
     "openProjectPageFailed": "打开项目地址失败"
   },
+  "deletedProjects": {
+    "title": "已删除的项目",
+    "description": "这些项目已被隐藏但文件仍然保留。你可以恢复它们或永久删除。",
+    "noDeletedProjects": "没有已删除的项目",
+    "deletedProjectsInfo": "当你删除项目时，它们会显示在这里以便恢复",
+    "deleted": "已删除",
+    "oldFormat": "旧格式",
+    "restoreProject": "恢复项目",
+    "restore": "恢复",
+    "permanentlyDelete": "永久删除",
+    "confirmPermanentDelete": "永久删除项目？",
+    "permanentDeleteWarning": "此操作将永久删除项目及其所有文件。此操作无法撤销。",
+    "projectRestored": "项目已成功恢复",
+    "projectPermanentlyDeleted": "项目已永久删除",
+    "deleteFailed": "删除失败: {{error}}"
+  },
+  "about": {
+    "version": "版本",
+    "description": "Any Code 是一个强大的 Claude Code 会话管理工具，帮助您更好地组织和管理 Claude 对话。",
+    "checkUpdate": "检查更新",
+    "visitProject": "访问项目地址"
+  },
   "codexEditor": {
     "codexDirNotFound": "未找到 Codex 目录。请确保已安装 Codex CLI。",
     "cannotLoadAgents": "无法加载 AGENTS.md 文件",

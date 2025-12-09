@@ -26,6 +26,7 @@ import {
 import * as api from "@/lib/api";
 import type { Project } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DeletedProjectsProps {
   /**
@@ -46,6 +47,7 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
   onProjectRestored,
   className
 }) => {
+  const { t } = useTranslation();
   const [deletedProjects, setDeletedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
       await api.api.restoreProject(projectId);
       
       // Show success message
-      setSuccessMessage(`项目已成功恢复`);
+      setSuccessMessage(t('deletedProjects.projectRestored'));
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Reload the list
@@ -148,7 +150,7 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
       await api.api.deleteProjectPermanently(permanentDeleteDialog.projectId);
 
       // Show success message
-      setSuccessMessage(`项目已永久删除`);
+      setSuccessMessage(t('deletedProjects.projectPermanentlyDeleted'));
       setTimeout(() => setSuccessMessage(null), 3000);
 
       setPermanentDeleteDialog({ open: false, projectId: null });
@@ -160,7 +162,7 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
       // 3. The deleted projects list is already updated via loadDeletedProjects()
     } catch (error) {
       console.error("Failed to permanently delete project:", error);
-      setSuccessMessage(`删除失败: ${error}`);
+      setSuccessMessage(t('deletedProjects.deleteFailed', { error: String(error) }));
       setTimeout(() => setSuccessMessage(null), 3000);
     } finally {
       setLoading(false);
@@ -179,9 +181,9 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
     return (
       <div className="text-center py-12">
         <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">没有已删除的项目</h3>
+        <h3 className="text-lg font-medium mb-2">{t('deletedProjects.noDeletedProjects')}</h3>
         <p className="text-sm text-muted-foreground">
-          当你删除项目时，它们会显示在这里以便恢复
+          {t('deletedProjects.deletedProjectsInfo')}
         </p>
       </div>
     );
@@ -211,9 +213,9 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
       {/* Info alert */}
       <Alert>
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>已删除的项目</AlertTitle>
+        <AlertTitle>{t('deletedProjects.title')}</AlertTitle>
         <AlertDescription>
-          这些项目已被隐藏但文件仍然保留。你可以恢复它们或永久删除。
+          {t('deletedProjects.description')}
         </AlertDescription>
       </Alert>
 
@@ -244,13 +246,13 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
                 
                 <div className="flex items-center gap-3 ml-4">
                   <Badge variant="secondary" className="shrink-0 bg-muted/50 text-muted-foreground hover:bg-muted/50">
-                    已删除
+                    {t('deletedProjects.deleted')}
                   </Badge>
-                  
+
                   {/* Format indicator for debugging */}
                   {project.id.includes('--') && (
                     <Badge variant="outline" className="shrink-0 text-xs">
-                      旧格式
+                      {t('deletedProjects.oldFormat')}
                     </Badge>
                   )}
                   
@@ -261,28 +263,28 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
                       onClick={() => handleRestore(project.id)}
                       disabled={restoring === project.id}
                       className="h-8 text-primary hover:text-primary hover:bg-primary/10"
-                      title="恢复项目"
+                      title={t('deletedProjects.restoreProject')}
                     >
                       {restoring === project.id ? (
                         <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-primary border-t-transparent" />
                       ) : (
                         <RotateCcw className="h-4 w-4" />
                       )}
-                      <span className="ml-2 sr-only">恢复</span>
+                      <span className="ml-2 sr-only">{t('deletedProjects.restore')}</span>
                     </Button>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setPermanentDeleteDialog({ 
-                        open: true, 
-                        projectId: project.id 
+                      onClick={() => setPermanentDeleteDialog({
+                        open: true,
+                        projectId: project.id
                       })}
                       className="h-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                      title="永久删除"
+                      title={t('deletedProjects.permanentlyDelete')}
                     >
                       <Trash2 className="h-4 w-4" />
-                      <span className="ml-2 sr-only">永久删除</span>
+                      <span className="ml-2 sr-only">{t('deletedProjects.permanentlyDelete')}</span>
                     </Button>
                   </div>
                 </div>
@@ -302,26 +304,26 @@ export const DeletedProjects: React.FC<DeletedProjectsProps> = ({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>永久删除项目？</DialogTitle>
+            <DialogTitle>{t('deletedProjects.confirmPermanentDelete')}</DialogTitle>
             <DialogDescription>
-              此操作将永久删除项目及其所有文件。此操作无法撤销。
+              {t('deletedProjects.permanentDeleteWarning')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setPermanentDeleteDialog({ 
-                open: false, 
-                projectId: null 
+              onClick={() => setPermanentDeleteDialog({
+                open: false,
+                projectId: null
               })}
             >
-              取消
+              {t('buttons.cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handlePermanentDelete}
             >
-              永久删除
+              {t('deletedProjects.permanentlyDelete')}
             </Button>
           </DialogFooter>
         </DialogContent>
