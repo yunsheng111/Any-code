@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Loader2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import React from "react";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { ClaudeIcon } from "@/components/icons/ClaudeIcon";
 import { CodexIcon } from "@/components/icons/CodexIcon";
 import { GeminiIcon } from "@/components/icons/GeminiIcon";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { useEngineStatus } from "@/hooks/useEngineStatus";
 import {
   Tooltip,
   TooltipContent,
@@ -17,7 +17,7 @@ interface UnifiedEngineStatusProps {
   compact?: boolean;
 }
 
-interface EngineStatus {
+interface EngineStatusDisplay {
   type: 'claude' | 'codex' | 'gemini';
   isInstalled: boolean;
   statusText: string;
@@ -31,80 +31,45 @@ export const UnifiedEngineStatus: React.FC<UnifiedEngineStatusProps> = ({
   className,
   compact = false,
 }) => {
-  const [statuses, setStatuses] = useState<EngineStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    loading,
+    claudeInstalled,
+    claudeVersion,
+    codexAvailable,
+    codexVersion,
+    geminiInstalled,
+    geminiVersion,
+  } = useEngineStatus();
 
-  const loadStatus = async () => {
-    try {
-      // Check Claude
-      const claudeStatus = await api.checkClaudeVersion();
-      
-      // Check Codex (Configuration check)
-      let codexInstalled = false;
-      let codexVersion = '';
-      try {
-        const codexConfig = await api.getCurrentCodexConfig();
-        // Assuming if auth/config exist, it's configured. 
-        // Or check actual binary if available (checkCodexAvailability)
-        const codexCheck = await api.checkCodexAvailability();
-        codexInstalled = codexCheck.available;
-        codexVersion = codexCheck.version || '';
-      } catch (e) {
-        console.warn("Codex check failed", e);
-      }
-
-      // Check Gemini (Installation check)
-      let geminiInstalled = false;
-      let geminiVersion = '';
-      try {
-        const geminiCheck = await api.checkGeminiInstalled();
-        geminiInstalled = geminiCheck.installed;
-        geminiVersion = geminiCheck.version || '';
-      } catch (e) {
-        console.warn("Gemini check failed", e);
-      }
-
-      setStatuses([
-        { 
-          type: 'claude', 
-          isInstalled: claudeStatus.is_installed, 
-          statusText: claudeStatus.is_installed ? '已安装' : '未检测到',
-          version: claudeStatus.version,
-          label: 'Claude Code', 
-          icon: ClaudeIcon, 
-          color: 'text-orange-500' 
-        },
-        { 
-          type: 'codex', 
-          isInstalled: codexInstalled, 
-          statusText: codexInstalled ? '已配置' : '未配置',
-          version: codexVersion,
-          label: 'OpenAI Codex', 
-          icon: CodexIcon, 
-          color: 'text-blue-500' 
-        },
-        {
-          type: 'gemini',
-          isInstalled: geminiInstalled,
-          statusText: geminiInstalled ? '已安装' : '未安装',
-          version: geminiVersion,
-          label: 'Google Gemini',
-          icon: GeminiIcon,
-          color: 'text-purple-500'
-        },
-      ]);
-
-    } catch (err) {
-      console.error("Failed to load engine statuses:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStatus();
-    // Optional: Listen for configuration changes if events exist
-  }, []);
+  const statuses: EngineStatusDisplay[] = [
+    {
+      type: 'claude',
+      isInstalled: claudeInstalled,
+      statusText: claudeInstalled ? '已安装' : '未检测到',
+      version: claudeVersion,
+      label: 'Claude Code',
+      icon: ClaudeIcon,
+      color: 'text-orange-500'
+    },
+    {
+      type: 'codex',
+      isInstalled: codexAvailable,
+      statusText: codexAvailable ? '已配置' : '未配置',
+      version: codexVersion,
+      label: 'OpenAI Codex',
+      icon: CodexIcon,
+      color: 'text-blue-500'
+    },
+    {
+      type: 'gemini',
+      isInstalled: geminiInstalled,
+      statusText: geminiInstalled ? '已安装' : '未安装',
+      version: geminiVersion,
+      label: 'Google Gemini',
+      icon: GeminiIcon,
+      color: 'text-purple-500'
+    },
+  ];
 
   if (loading) {
     return (

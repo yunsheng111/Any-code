@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { relaunchApp } from '@/lib/updater';
 import { ask, message } from '@tauri-apps/plugin-dialog';
+import { useEngineStatus } from '@/hooks/useEngineStatus';
 import type { CodexExecutionMode } from '@/types/codex';
 
 // ============================================================================
@@ -66,36 +67,21 @@ export const ExecutionEngineSelector: React.FC<ExecutionEngineSelectorProps> = (
   className = '',
 }) => {
   const [showSettings, setShowSettings] = useState(false);
-  const [codexAvailable, setCodexAvailable] = useState(false);
-  const [codexVersion, setCodexVersion] = useState<string | null>(null);
   const [codexModeConfig, setCodexModeConfig] = useState<CodexModeConfig | null>(null);
   const [savingConfig, setSavingConfig] = useState(false);
-  // Gemini state
-  const [geminiAvailable, setGeminiAvailable] = useState(false);
-  const [geminiVersion, setGeminiVersion] = useState<string | null>(null);
 
-  // Check Codex and Gemini availability on mount
+  // 使用全局缓存的引擎状态
+  const {
+    codexAvailable,
+    codexVersion,
+    geminiInstalled: geminiAvailable,
+    geminiVersion,
+  } = useEngineStatus();
+
+  // Load Codex mode config on mount
   useEffect(() => {
-    checkCodexAvailability();
     loadCodexModeConfig();
-    checkGeminiAvailability();
   }, []);
-
-  const checkCodexAvailability = async () => {
-    try {
-      if (!api || typeof api.checkCodexAvailability !== 'function') {
-        throw new Error('api.checkCodexAvailability is not available');
-      }
-
-      const result = await api.checkCodexAvailability();
-
-      setCodexAvailable(result.available);
-      setCodexVersion(result.version || null);
-    } catch (error) {
-      console.error('[ExecutionEngineSelector] Failed to check Codex availability:', error);
-      setCodexAvailable(false);
-    }
-  };
 
   const loadCodexModeConfig = async () => {
     try {
@@ -106,22 +92,6 @@ export const ExecutionEngineSelector: React.FC<ExecutionEngineSelectorProps> = (
       setCodexModeConfig(config);
     } catch (error) {
       console.error('[ExecutionEngineSelector] Failed to load Codex mode config:', error);
-    }
-  };
-
-  const checkGeminiAvailability = async () => {
-    try {
-      if (!api || typeof api.checkGeminiInstalled !== 'function') {
-        console.warn('[ExecutionEngineSelector] api.checkGeminiInstalled is not available');
-        return;
-      }
-
-      const result = await api.checkGeminiInstalled();
-      setGeminiAvailable(result.installed);
-      setGeminiVersion(result.version || null);
-    } catch (error) {
-      console.error('[ExecutionEngineSelector] Failed to check Gemini availability:', error);
-      setGeminiAvailable(false);
     }
   };
 
