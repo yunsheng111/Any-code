@@ -21,6 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PromptContextConfigSettingsProps {
   className?: string;
@@ -29,6 +30,7 @@ interface PromptContextConfigSettingsProps {
 export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsProps> = ({
   className
 }) => {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<PromptContextConfig>(loadContextConfig());
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -66,31 +68,31 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            上下文提取配置
+            {t('promptContext.title')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            配置提示词优化时提取的会话上下文参数
+            {t('promptContext.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           {hasChanges && (
             <Badge variant="outline" className="text-orange-600 border-orange-600">
-              未保存
+              {t('promptContext.unsaved')}
             </Badge>
           )}
           <Button onClick={handleReset} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
-            重置
+            {t('promptContext.reset')}
           </Button>
           <Button onClick={handleSave} size="sm" disabled={!hasChanges}>
-            保存配置
+            {t('promptContext.saveConfig')}
           </Button>
         </div>
       </div>
 
       {/* 预设模板 */}
       <Card className="p-4 bg-muted/30">
-        <h4 className="text-sm font-medium mb-3">快速预设：</h4>
+        <h4 className="text-sm font-medium mb-3">{t('promptContext.quickPresets')}</h4>
         <div className="flex flex-wrap gap-2">
           {Object.entries(CONTEXT_PRESETS).map(([key, preset]) => (
             <TooltipProvider key={key}>
@@ -120,19 +122,19 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label>最大消息数量</Label>
+                <Label>{t('promptContext.maxMessages')}</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>提取的最近消息数量，越多上下文越完整但会消耗更多 token</p>
+                      <p>{t('promptContext.maxMessagesDesc')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Badge variant="secondary">{config.maxMessages} 条</Badge>
+              <Badge variant="secondary">{config.maxMessages} {t('promptContext.messages')}</Badge>
             </div>
             <Slider
               value={[config.maxMessages]}
@@ -143,8 +145,8 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>3 条（最少）</span>
-              <span>50 条（最多）</span>
+              <span>{t('promptContext.minMessages')}</span>
+              <span>{t('promptContext.maxMessagesLimit')}</span>
             </div>
           </div>
 
@@ -152,19 +154,19 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label>助手消息最大长度</Label>
+                <Label>{t('promptContext.maxAssistantLength')}</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>单条助手回复的最大字符数，超过会被截断</p>
+                      <p>{t('promptContext.maxAssistantLengthDesc')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Badge variant="secondary">{config.maxAssistantMessageLength} 字符</Badge>
+              <Badge variant="secondary">{config.maxAssistantMessageLength} {t('promptContext.characters')}</Badge>
             </div>
             <Slider
               value={[config.maxAssistantMessageLength]}
@@ -175,8 +177,8 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>200 字符</span>
-              <span>10,000 字符</span>
+              <span>{t('promptContext.minAssistantLength')}</span>
+              <span>{t('promptContext.maxAssistantLengthLimit')}</span>
             </div>
           </div>
 
@@ -184,19 +186,19 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label>用户消息最大长度</Label>
+                <Label>{t('promptContext.maxUserLength')}</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>单条用户提问的最大字符数，超过会被截断</p>
+                      <p>{t('promptContext.maxUserLengthDesc')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <Badge variant="secondary">{config.maxUserMessageLength} 字符</Badge>
+              <Badge variant="secondary">{config.maxUserMessageLength} {t('promptContext.characters')}</Badge>
             </div>
             <Slider
               value={[config.maxUserMessageLength]}
@@ -207,22 +209,22 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>200 字符</span>
-              <span>5,000 字符</span>
+              <span>{t('promptContext.minUserLength')}</span>
+              <span>{t('promptContext.maxUserLengthLimit')}</span>
             </div>
           </div>
 
           {/* 包含执行结果 */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
-              <Label>包含执行结果</Label>
+              <Label>{t('promptContext.includeResults')}</Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>是否在上下文中包含命令执行结果</p>
+                    <p>{t('promptContext.includeResultsDesc')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -238,19 +240,19 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
             <div className="space-y-3 pl-6 border-l-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm">执行结果最大长度</Label>
+                  <Label className="text-sm">{t('promptContext.maxResultLength')}</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <Info className="h-4 w-4 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>单条执行结果的最大字符数，超过会被截断</p>
+                        <p>{t('promptContext.maxResultLengthDesc')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-                <Badge variant="secondary">{config.maxExecutionResultLength} 字符</Badge>
+                <Badge variant="secondary">{config.maxExecutionResultLength} {t('promptContext.characters')}</Badge>
               </div>
               <Slider
                 value={[config.maxExecutionResultLength]}
@@ -261,8 +263,8 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>100 字符</span>
-                <span>2,000 字符</span>
+                <span>{t('promptContext.minResultLength')}</span>
+                <span>{t('promptContext.maxResultLengthLimit')}</span>
               </div>
             </div>
           )}
@@ -275,13 +277,13 @@ export const PromptContextConfigSettings: React.FC<PromptContextConfigSettingsPr
           <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
           <div className="space-y-2 text-sm">
             <p className="font-medium text-blue-900 dark:text-blue-100">
-              配置建议：
+              {t('promptContext.recommendations')}
             </p>
             <ul className="space-y-1 text-blue-800 dark:text-blue-200 list-disc list-inside">
-              <li><strong>简单任务</strong>：5-10 条消息，500-1000 字符</li>
-              <li><strong>一般任务</strong>：10-20 条消息，1000-2000 字符（推荐）</li>
-              <li><strong>复杂任务</strong>：20-50 条消息，2000-5000 字符</li>
-              <li>更多上下文会提高优化质量，但也会增加 API 调用成本</li>
+              <li>{t('promptContext.simpleTask')}</li>
+              <li>{t('promptContext.normalTask')}</li>
+              <li>{t('promptContext.complexTask')}</li>
+              <li>{t('promptContext.contextNote')}</li>
             </ul>
           </div>
         </div>
