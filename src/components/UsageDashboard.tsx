@@ -229,7 +229,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 shimmer-hover">
           <div>
-            <p className="text-caption text-muted-foreground">总费用</p>
+            <p className="text-caption text-muted-foreground">{t('usageDashboard.totalCost')}</p>
             <p className="text-display-2 mt-1">
               {formatCurrency(stats.total_cost)}
             </p>
@@ -238,7 +238,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
 
         <Card className="p-4 shimmer-hover">
           <div>
-            <p className="text-caption text-muted-foreground">总会话数</p>
+            <p className="text-caption text-muted-foreground">{t('usageDashboard.totalSessions')}</p>
             <p className="text-display-2 mt-1">
               {formatNumber(stats.total_sessions)}
             </p>
@@ -247,7 +247,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
 
         <Card className="p-4 shimmer-hover">
           <div>
-            <p className="text-caption text-muted-foreground">总令牌数</p>
+            <p className="text-caption text-muted-foreground">{t('usageDashboard.totalTokens')}</p>
             <p className="text-display-2 mt-1">
               {formatTokens(stats.total_tokens)}
             </p>
@@ -256,11 +256,11 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
 
         <Card className="p-4 shimmer-hover">
           <div>
-                        <p className="text-caption text-muted-foreground">平均成本/会话</p>
+                        <p className="text-caption text-muted-foreground">{t('usageDashboard.averageCostPerSession')}</p>
             <p className="text-display-2 mt-1">
               {formatCurrency(
-                stats.total_sessions > 0 
-                  ? stats.total_cost / stats.total_sessions 
+                stats.total_sessions > 0
+                  ? stats.total_cost / stats.total_sessions
                   : 0
               )}
             </p>
@@ -268,7 +268,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
         </Card>
       </div>
     );
-  }, [stats, formatCurrency, formatNumber, formatTokens]);
+  }, [stats, formatCurrency, formatNumber, formatTokens, t]);
 
   // Memoize the most used models section
   const mostUsedModels = useMemo(() => {
@@ -367,7 +367,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                     onClick={() => setSelectedDateRange(range)}
                     disabled={loading}
                   >
-                    {range === "today" ? "今日" : range === "all" ? "全部" : range === "7d" ? "最近7天" : "最近30天"}
+                    {range === "today" ? t('usageDashboard.today') : range === "all" ? t('usageDashboard.all') : range === "7d" ? t('usageDashboard.last7Days') : t('usageDashboard.last30Days')}
                   </Button>
                 ))}
               </div>
@@ -399,32 +399,32 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                 setHasLoadedTabs(prev => new Set([...prev, value]));
               }} className="w-full">
                 <TabsList className="grid grid-cols-5 w-full mb-6 h-auto p-1">
-                  <TabsTrigger value="overview" className="py-2.5 px-3">概览</TabsTrigger>
-                  <TabsTrigger value="models" className="py-2.5 px-3">按模型</TabsTrigger>
-                  <TabsTrigger value="projects" className="py-2.5 px-3">按项目</TabsTrigger>
-                  <TabsTrigger value="sessions" className="py-2.5 px-3">按会话</TabsTrigger>
-                  <TabsTrigger value="timeline" className="py-2.5 px-3">时间线</TabsTrigger>
+                  <TabsTrigger value="overview" className="py-2.5 px-3">{t('common.overview')}</TabsTrigger>
+                  <TabsTrigger value="models" className="py-2.5 px-3">{t('usage.byModel')}</TabsTrigger>
+                  <TabsTrigger value="projects" className="py-2.5 px-3">{t('usage.byProject')}</TabsTrigger>
+                  <TabsTrigger value="sessions" className="py-2.5 px-3">{t('common.sessions')}</TabsTrigger>
+                  <TabsTrigger value="timeline" className="py-2.5 px-3">{t('common.timeline')}</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-6 mt-6">
                   <Card className="p-6">
-                    <h3 className="text-label mb-4">Token 统计</h3>
+                    <h3 className="text-label mb-4">{t('usageDashboard.tokenStats')}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <p className="text-caption text-muted-foreground">输入 Tokens</p>
+                        <p className="text-caption text-muted-foreground">{t('usageDashboard.inputTokens')}</p>
                         <p className="text-heading-4">{formatTokens(stats.total_input_tokens)}</p>
                       </div>
                       <div>
-                        <p className="text-caption text-muted-foreground">输出 Tokens</p>
+                        <p className="text-caption text-muted-foreground">{t('usageDashboard.outputTokens')}</p>
                         <p className="text-heading-4">{formatTokens(stats.total_output_tokens)}</p>
                       </div>
                       <div>
-                        <p className="text-caption text-muted-foreground">Cache 写入</p>
+                        <p className="text-caption text-muted-foreground">{t('usageDashboard.cacheWrite')}</p>
                         <p className="text-heading-4">{formatTokens(stats.total_cache_creation_tokens)}</p>
                       </div>
                       <div>
-                        <p className="text-caption text-muted-foreground">Cache 读取</p>
+                        <p className="text-caption text-muted-foreground">{t('usageDashboard.cacheRead')}</p>
                         <p className="text-heading-4">{formatTokens(stats.total_cache_read_tokens)}</p>
                       </div>
                     </div>
@@ -433,14 +433,14 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                   {/* Quick Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="p-6">
-                      <h3 className="text-label mb-4">最常用模型</h3>
+                      <h3 className="text-label mb-4">{t('usageDashboard.mostUsedModels')}</h3>
                       <div className="space-y-3">
                         {mostUsedModels}
                       </div>
                     </Card>
 
                     <Card className="p-6">
-                      <h3 className="text-label mb-4">热门项目</h3>
+                      <h3 className="text-label mb-4">{t('usageDashboard.topProjects')}</h3>
                       <div className="space-y-3">
                         {topProjects}
                       </div>
@@ -505,9 +505,9 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                     <div style={{ display: activeTab === "projects" ? "block" : "none" }}>
                       <Card className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold">按项目统计</h3>
+                        <h3 className="text-sm font-semibold">{t('usageDashboard.projectStats')}</h3>
                         <span className="text-xs text-muted-foreground">
-                          {stats.by_project.length} total projects
+                          {stats.by_project.length} {t('usageDashboard.totalProjects')}
                         </span>
                       </div>
                       <div className="space-y-3">
@@ -587,10 +587,10 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                     <div style={{ display: activeTab === "sessions" ? "block" : "none" }}>
                       <Card className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold">按会话统计</h3>
+                        <h3 className="text-sm font-semibold">{t('usageDashboard.sessionStats')}</h3>
                         {sessionStats && sessionStats.length > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            {sessionStats.length} total sessions
+                            {sessionStats.length} {t('usageDashboard.totalSessionsCount')}
                           </span>
                         )}
                       </div>
@@ -658,7 +658,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                           );
                         })() : (
                           <div className="text-center py-8 text-sm text-muted-foreground">
-                            No session data available for the selected period
+                            {t('usageDashboard.noSessionData')}
                           </div>
                           )}
                         </div>
@@ -674,7 +674,7 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                       <Card className="p-6">
                       <h3 className="text-sm font-semibold mb-6 flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
-                        <span>每日使用量</span>
+                        <span>{t('usageDashboard.dailyUsage')}</span>
                       </h3>
                       {timelineChartData ? (
                         <div className="relative pl-8 pr-4">
@@ -701,13 +701,13 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                                     <div className="bg-background border border-border rounded-lg shadow-lg p-3 whitespace-nowrap">
                                       <p className="text-sm font-semibold">{formattedDate}</p>
                                       <p className="text-sm text-muted-foreground mt-1">
-                                        成本: {formatCurrency(day.total_cost)}
+                                        {t('usageDashboard.cost')}: {formatCurrency(day.total_cost)}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        {formatTokens(day.total_tokens)} tokens
+                                        {formatTokens(day.total_tokens)} {t('usageDashboard.tokens')}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        {day.models_used.length} model{day.models_used.length !== 1 ? 's' : ''}
+                                        {day.models_used.length} {day.models_used.length !== 1 ? t('usageDashboard.models') : t('usageDashboard.model')}
                                       </p>
                                     </div>
                                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
@@ -731,15 +731,15 @@ export const UsageDashboard: React.FC<UsageDashboardProps> = ({ onBack }) => {
                               );
                             })}
                           </div>
-                          
+
                           {/* X-axis label */}
                           <div className="mt-10 text-center text-xs text-muted-foreground">
-                            每日使用趋势
+                            {t('usageDashboard.dailyUsageTrend')}
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-8 text-sm text-muted-foreground">
-                          No usage data available for the selected period
+                          {t('usageDashboard.noUsageData')}
                         </div>
                         )}
                       </Card>
