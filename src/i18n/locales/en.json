@@ -1,13 +1,12 @@
 {
   "app": {
-    "title": "Claude Workbench",
-    "subtitle": "Professional desktop application and toolkit for Claude CLI"
+    "title": "Any Code",
+    "subtitle": "Professional desktop application and toolkit for AI CLI"
   },
   "navigation": {
-
     "ccProjects": "CC Projects",
     "settings": "Settings",
-    "usage": "Usage Dashboard",
+    "usage": "Usage Statistics",
     "mcpManager": "MCP Manager"
   },
   "buttons": {
@@ -36,7 +35,6 @@
     "upload": "Upload",
     "download": "Download"
   },
-
   "projects": {
     "title": "CC Projects",
     "projectName": "Project Name",
@@ -59,7 +57,7 @@
     "storage": "Storage"
   },
   "usage": {
-    "title": "Usage Dashboard",
+    "title": "Usage Statistics",
     "totalCost": "Total Cost",
     "tokensUsed": "Tokens Used",
     "requests": "Requests",
@@ -95,10 +93,99 @@
     "connecting": "Connecting...",
     "disconnecting": "Disconnecting..."
   },
+  "claude": {
+    "title": "Claude Code",
+    "session": "Session",
+    "sessions": "Sessions List",
+    "newSession": "New Session",
+    "resumeSession": "Resume Session",
+    "sessionHistory": "Session History",
+    "prompt": "Prompt",
+    "response": "Response",
+    "thinking": "Thinking...",
+    "generating": "Generating...",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "model": {
+      "claude45Sonnet": "Claude 4.5 Sonnet",
+      "claude41Opus": "Claude 4.1 Opus"
+    }
+  },
+  "files": {
+    "title": "Files",
+    "fileName": "File Name",
+    "filePath": "File Path",
+    "fileSize": "File Size",
+    "lastModified": "Last Modified",
+    "openFile": "Open File",
+    "saveFile": "Save File",
+    "deleteFile": "Delete File",
+    "renameFile": "Rename File",
+    "copyPath": "Copy Path",
+    "claudeMd": "CLAUDE.md File",
+    "editClaudeMd": "Edit CLAUDE.md",
+    "preview": "Preview",
+    "editor": "Editor"
+  },
+  "sandbox": {
+    "title": "Sandbox",
+    "profile": "Profile",
+    "profiles": "Profiles",
+    "createProfile": "Create Profile",
+    "permissions": "Permissions",
+    "fileAccess": "File Access",
+    "networkAccess": "Network Access",
+    "systemAccess": "System Access",
+    "violations": "Violations",
+    "security": "Security",
+    "restricted": "Restricted",
+    "allowed": "Allowed",
+    "denied": "Denied"
+  },
+  "execution": {
+    "title": "Execution",
+    "status": "Status",
+    "running": "Running",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "duration": "Duration",
+    "output": "Output",
+    "logs": "Logs",
+    "metrics": "Metrics",
+    "performance": "Performance"
+  },
+  "dialogs": {
+    "confirmDelete": "Confirm Delete",
+    "confirmDeleteMessage": "Are you sure you want to delete this item? This action cannot be undone.",
+    "confirmCancel": "Confirm Cancel",
+    "confirmCancelMessage": "Are you sure you want to cancel the current operation? Unsaved changes will be lost.",
+    "selectFile": "Select File",
+    "selectFolder": "Select Folder",
+    "saveAs": "Save As",
+    "openFile": "Open File"
+  },
+  "tooltips": {
+    "stopExecution": "Stop current execution",
+    "refreshList": "Refresh list",
+    "openSettings": "Open settings",
+    "viewUsage": "View usage statistics",
+    "manageMCP": "Manage MCP servers"
+  },
+  "placeholders": {
+    "searchProjects": "Search projects...",
+    "enterPrompt": "Enter your prompt...",
+    "systemPrompt": "Define agent behavior and capabilities",
+    "serverName": "Enter server name",
+    "serverUrl": "Enter server URL"
+  },
   "common": {
     "backToHome": "← Back to Home",
     "newProject": "New Project",
-    "newClaudeSession": "New Claude Code session",
+    "newClaudeSession": "New Claude Code Session",
     "browseClaudeSessions": "Browse your sessions",
     "noProjectsFound": "No projects found in ~/.claude/projects",
     "ccProjectsTitle": "All Projects",
@@ -107,6 +194,51 @@
     "claudeStillResponding": "Claude is still responding. If you leave, Claude will continue running in the background.\n\nYou can return to this session from the projects view.\n\nDo you want to continue?",
     "configureClaudePreferences": "Configure Claude Code preferences",
     "savingSettings": "Saving...",
-    "saveSettings": "Save Settings"
+    "saveSettings": "Save Settings",
+    "about": "About",
+    "basicInformation": "Basic Information",
+    "systemPromptRequired": "System prompt is required",
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
+    "saving": "Saving...",
+    "save": "Save",
+    "model": "Model",
+    "claude45Sonnet": "Claude 4.5 Sonnet",
+    "claude41Opus": "Claude 4.1 Opus",
+    "fasterEfficient": "Faster, suitable for most tasks",
+    "moreCapable": "More capable, suitable for complex tasks",
+    "defaultTaskOptional": "Default Task (Optional)",
+    "defaultTaskDescription": "Will be used as default task placeholder when executing agent",
+    "systemPrompt": "System Prompt",
+    "enterUrl": "Enter URL...",
+    "preview": "Preview",
+    "webPreview": "Web Preview",
+    "searchTodos": "Search todos...",
+    "beforeMajorRefactoring": "e.g., before major refactoring",
+    "selectTable": "Select Table",
+    "searchInTable": "Search in table...",
+    "sqlQuery": "SELECT * FROM usage_entries LIMIT 10;",
+    "searchCommands": "Search commands...",
+    "commandName": "e.g., review, fix-issue",
+    "commandCategory": "e.g., frontend, backend",
+    "commandDescription": "Brief description of what this command does",
+    "commandPrompt": "Enter prompt content. Use $ARGUMENTS for dynamic values.",
+    "pathToClaudeCli": "Enter path to Claude CLI executable (e.g., C:\\path\\to\\claude.exe)",
+    "bashExample": "e.g., Bash(npm run test:*)",
+    "exitFullScreen": "Exit Full Screen (ESC)",
+    "enterFullScreen": "Enter Full Screen",
+    "invalidUrl": "Invalid URL",
+    "goBack": "Go Back",
+    "goForward": "Go Forward",
+    "current": "Current",
+    "noPrompt": "No Prompt",
+    "descriptionOptional": "Description (Optional)",
+    "failedToLoadTables": "Failed to load tables",
+    "failedToLoadTableData": "Failed to load table data",
+    "failedToExecuteSQL": "Failed to execute SQL",
+    "failedToResetDatabase": "Failed to reset database",
+    "null": "null",
+    "true": "true",
+    "false": "false",
+    "basicInformationSection": "Basic Information"
   }
 }
