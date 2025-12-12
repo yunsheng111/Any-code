@@ -11,6 +11,7 @@ import { usePromptSuggestion } from "./hooks/usePromptSuggestion";
 import { api } from "@/lib/api";
 import { getEnabledProviders } from "@/lib/promptEnhancementService";
 import { inputReducer, initialState } from "./reducer";
+import { getDefaultModel } from "./defaultModelStorage";
 
 // Import sub-components
 import { InputArea } from "./InputArea";
@@ -61,10 +62,28 @@ const FloatingPromptInputInner = (
     return null;
   };
 
+  // Determine initial model:
+  // 1. Historical session: use sessionModel
+  // 2. New session: use user's default model or fallback to "sonnet"
+  const getInitialModel = (): ModelType => {
+    // If this is a historical session with saved model, use it
+    const parsedSessionModel = parseSessionModel(sessionModel);
+    if (parsedSessionModel) {
+      return parsedSessionModel;
+    }
+    // For new sessions, use user's default model setting
+    const userDefaultModel = getDefaultModel();
+    if (userDefaultModel) {
+      return userDefaultModel;
+    }
+    // Fall back to prop default or "sonnet"
+    return defaultModel;
+  };
+
   // Use Reducer for state management
   const [state, dispatch] = useReducer(inputReducer, {
     ...initialState,
-    selectedModel: parseSessionModel(sessionModel) || defaultModel,
+    selectedModel: getInitialModel(),
     executionEngineConfig: externalEngineConfig || initialState.executionEngineConfig,
   });
 
