@@ -220,7 +220,7 @@ export {
   SelectLabel,
   SelectItem,
   SelectSeparator,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
+  // SelectScrollUpButton,    // 未使用，已移除导出
+  // SelectScrollDownButton,  // 未使用，已移除导出
   SimpleSelect as SelectComponent,
 }; 

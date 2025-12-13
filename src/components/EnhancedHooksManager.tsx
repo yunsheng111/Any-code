@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type {
-  HookEvent,
+  EnhancedHookEvent,
   EnhancedHooksConfiguration,
   HookChainResult,
   HookContext
@@ -44,7 +44,7 @@ export function EnhancedHooksManager({ onBack, projectPath }: EnhancedHooksManag
   const [saving, setSaving] = useState(false);
   const [modified, setModified] = useState(false);
 
-  const [testEvent, setTestEvent] = useState<HookEvent | null>(null);
+  const [testEvent, setTestEvent] = useState<EnhancedHookEvent | null>(null);
   const [testContext, setTestContext] = useState<HookContext>({
     event: '',
     session_id: 'test-session',
@@ -224,7 +224,7 @@ export function EnhancedHooksManager({ onBack, projectPath }: EnhancedHooksManag
               <Label>选择事件类型</Label>
               <Select
                 value={testEvent || undefined}
-                onValueChange={(value) => setTestEvent(value as HookEvent)}
+                onValueChange={(value) => setTestEvent(value as EnhancedHookEvent)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择要测试的Hook事件" />

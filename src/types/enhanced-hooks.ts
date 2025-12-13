@@ -5,8 +5,9 @@
 
 /**
  * 扩展的Hook事件类型
+ * 注意：重命名为 EnhancedHookEvent 以避免与 @/types/hooks 中的 HookEvent 冲突
  */
-export type HookEvent =
+export type EnhancedHookEvent =
   // 现有事件
   | 'PreToolUse'
   | 'PostToolUse'
@@ -113,7 +114,7 @@ export interface EnhancedHooksAPI {
 /**
  * Hook事件描述
  */
-export const HOOK_EVENT_DESCRIPTIONS: Record<HookEvent, string> = {
+export const HOOK_EVENT_DESCRIPTIONS: Record<EnhancedHookEvent, string> = {
   // 现有事件
   'PreToolUse': '在工具使用前触发',
   'PostToolUse': '在工具使用后触发',
@@ -149,7 +150,7 @@ export const HOOK_EVENT_CATEGORIES = {
 export interface HookTemplate {
   name: string;
   description: string;
-  events: HookEvent[];
+  events: EnhancedHookEvent[];
   hooks: EnhancedHook[];
 }
 

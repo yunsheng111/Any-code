@@ -353,37 +353,6 @@ export function calculateSessionTokenTotals(messages: ClaudeStreamMessage[]): St
   });
 }
 
-/**
- * 验证token数据的完整性和准确性
- *
- * @param tokens - 标准化的token使用数据
- * @returns 验证结果和警告信息
- */
-export function validateTokenData(tokens: StandardizedTokenUsage): {
-  isValid: boolean;
-  warnings: string[];
-} {
-  const warnings: string[] = [];
-
-  // 检查负数
-  if (tokens.input_tokens < 0) warnings.push('输入token数量为负数');
-  if (tokens.output_tokens < 0) warnings.push('输出token数量为负数');
-  if (tokens.cache_creation_tokens < 0) warnings.push('缓存创建token数量为负数');
-  if (tokens.cache_read_tokens < 0) warnings.push('缓存读取token数量为负数');
-
-  // 检查总数一致性
-  const calculated_total = tokens.input_tokens + tokens.output_tokens +
-                          tokens.cache_creation_tokens + tokens.cache_read_tokens;
-  if (Math.abs(tokens.total_tokens - calculated_total) > 1) {
-    warnings.push(`总token数量不一致: 记录为${tokens.total_tokens}，计算为${calculated_total}`);
-  }
-
-  return {
-    isValid: warnings.length === 0,
-    warnings,
-  };
-}
-
 // 导出主要功能
 export const tokenExtractor = {
   extract: extractMessageTokens,
@@ -391,7 +360,6 @@ export const tokenExtractor = {
   tooltip: createMessageTokenTooltip,
   batch: extractBatchMessageTokens,
   sessionTotal: calculateSessionTokenTotals,
-  validate: validateTokenData,
 };
 
 // 默认导出
