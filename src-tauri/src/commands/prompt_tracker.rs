@@ -712,17 +712,26 @@ pub async fn revert_to_prompt(
             )
             .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
-            // 2. Load ALL git records for this session
+            // 2. Record original HEAD for atomic rollback on failure
+            let original_head = simple_git::git_current_commit(&project_path)
+                .map_err(|e| format!("Failed to get current commit: {}", e))?;
+
+            log::info!(
+                "[Precise Revert] Original HEAD: {} (will rollback here on failure)",
+                &original_head[..8.min(original_head.len())]
+            );
+
+            // 3. Load ALL git records for this session
             let all_git_records = load_git_records(&session_id, &project_id)
                 .map_err(|e| format!("Failed to load git records: {}", e))?;
 
-            // 3. Filter records for prompt_index and onwards, then sort by index descending
+            // 4. Filter records for prompt_index and onwards, then sort by index descending
             let mut records_to_revert: Vec<(usize, GitRecord)> = all_git_records
                 .into_iter()
                 .filter(|(idx, _)| *idx >= prompt_index)
                 .collect();
 
-            // Sort by index descending (newest first)
+            // Sort by index descending (newest first) - revert from newest to oldest
             records_to_revert.sort_by(|a, b| b.0.cmp(&a.0));
 
             log::info!(
@@ -731,10 +740,10 @@ pub async fn revert_to_prompt(
                 prompt_index
             );
 
-            // 4. Revert each record's commit_before..commit_after in reverse order
+            // 5. Revert each record's commit_before..commit_after in reverse order
             let mut total_reverted = 0;
             let mut revert_failed = false;
-            let mut first_commit_before: Option<String> = None;
+            let mut failure_message = String::new();
 
             for (idx, record) in &records_to_revert {
                 // Skip if no commit_after (AI didn't make any changes)
@@ -745,11 +754,6 @@ pub async fn revert_to_prompt(
                         continue;
                     }
                 };
-
-                // Save the first (oldest) commit_before for fallback
-                if first_commit_before.is_none() {
-                    first_commit_before = Some(record.commit_before.clone());
-                }
 
                 log::info!(
                     "[Precise Revert] Reverting prompt #{}: {}..{}",
@@ -781,26 +785,31 @@ pub async fn revert_to_prompt(
                             result.message
                         );
                         revert_failed = true;
+                        failure_message = result.message;
                         break;
                     }
                     Err(e) => {
                         log::warn!("[Precise Revert] Revert failed for prompt #{}: {}", idx, e);
                         revert_failed = true;
+                        failure_message = e;
                         break;
                     }
                 }
             }
 
-            // 5. If revert failed due to conflicts, fall back to reset (last resort)
+            // 6. If revert failed, rollback to original HEAD (atomic operation)
             if revert_failed {
-                if let Some(fallback_commit) = first_commit_before {
-                    log::warn!(
-                        "[Precise Revert] Falling back to reset --hard to {}",
-                        &fallback_commit[..8.min(fallback_commit.len())]
-                    );
-                    simple_git::git_reset_hard(&project_path, &fallback_commit)
-                        .map_err(|e| format!("Failed to reset code: {}", e))?;
-                }
+                log::warn!(
+                    "[Precise Revert] Rolling back to original HEAD {} due to failure",
+                    &original_head[..8.min(original_head.len())]
+                );
+                simple_git::git_reset_hard(&project_path, &original_head)
+                    .map_err(|e| format!("Failed to rollback: {}", e))?;
+
+                return Err(format!(
+                    "撤回失败，已回滚到操作前状态。原因: {}",
+                    failure_message
+                ));
             }
 
             log::info!(
@@ -821,17 +830,26 @@ pub async fn revert_to_prompt(
             )
             .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
-            // 2. Load ALL git records for this session
+            // 2. Record original HEAD for atomic rollback on failure
+            let original_head = simple_git::git_current_commit(&project_path)
+                .map_err(|e| format!("Failed to get current commit: {}", e))?;
+
+            log::info!(
+                "[Precise Revert] Original HEAD: {} (will rollback here on failure)",
+                &original_head[..8.min(original_head.len())]
+            );
+
+            // 3. Load ALL git records for this session
             let all_git_records = load_git_records(&session_id, &project_id)
                 .map_err(|e| format!("Failed to load git records: {}", e))?;
 
-            // 3. Filter records for prompt_index and onwards, then sort by index descending
+            // 4. Filter records for prompt_index and onwards, then sort by index descending
             let mut records_to_revert: Vec<(usize, GitRecord)> = all_git_records
                 .into_iter()
                 .filter(|(idx, _)| *idx >= prompt_index)
                 .collect();
 
-            // Sort by index descending (newest first)
+            // Sort by index descending (newest first) - revert from newest to oldest
             records_to_revert.sort_by(|a, b| b.0.cmp(&a.0));
 
             log::info!(
@@ -840,10 +858,10 @@ pub async fn revert_to_prompt(
                 prompt_index
             );
 
-            // 4. Revert each record's commit_before..commit_after in reverse order
+            // 5. Revert each record's commit_before..commit_after in reverse order
             let mut total_reverted = 0;
             let mut revert_failed = false;
-            let mut first_commit_before: Option<String> = None;
+            let mut failure_message = String::new();
 
             for (idx, record) in &records_to_revert {
                 // Skip if no commit_after (AI didn't make any changes)
@@ -854,11 +872,6 @@ pub async fn revert_to_prompt(
                         continue;
                     }
                 };
-
-                // Save the first (oldest) commit_before for fallback
-                if first_commit_before.is_none() {
-                    first_commit_before = Some(record.commit_before.clone());
-                }
 
                 log::info!(
                     "[Precise Revert] Reverting prompt #{}: {}..{}",
@@ -890,26 +903,31 @@ pub async fn revert_to_prompt(
                             result.message
                         );
                         revert_failed = true;
+                        failure_message = result.message;
                         break;
                     }
                     Err(e) => {
                         log::warn!("[Precise Revert] Revert failed for prompt #{}: {}", idx, e);
                         revert_failed = true;
+                        failure_message = e;
                         break;
                     }
                 }
             }
 
-            // 5. If revert failed due to conflicts, fall back to reset (last resort)
+            // 6. If revert failed, rollback to original HEAD (atomic operation)
             if revert_failed {
-                if let Some(fallback_commit) = first_commit_before {
-                    log::warn!(
-                        "[Precise Revert] Falling back to reset --hard to {}",
-                        &fallback_commit[..8.min(fallback_commit.len())]
-                    );
-                    simple_git::git_reset_hard(&project_path, &fallback_commit)
-                        .map_err(|e| format!("Failed to reset code: {}", e))?;
-                }
+                log::warn!(
+                    "[Precise Revert] Rolling back to original HEAD {} due to failure",
+                    &original_head[..8.min(original_head.len())]
+                );
+                simple_git::git_reset_hard(&project_path, &original_head)
+                    .map_err(|e| format!("Failed to rollback: {}", e))?;
+
+                return Err(format!(
+                    "撤回失败，已回滚到操作前状态。原因: {}",
+                    failure_message
+                ));
             }
 
             log::info!(
@@ -919,11 +937,11 @@ pub async fn revert_to_prompt(
                 records_to_revert.len()
             );
 
-            // 6. Truncate session messages (delete prompt #N and all after)
+            // 7. Truncate session messages (delete prompt #N and all after)
             truncate_session_to_prompt(&session_id, &project_id, prompt_index)
                 .map_err(|e| format!("Failed to truncate session: {}", e))?;
 
-            // 7. Truncate git records
+            // 8. Truncate git records
             // Skip if Git operations are disabled
             if !git_operations_disabled {
                 truncate_git_records(&session_id, &project_id, &prompts, prompt_index)

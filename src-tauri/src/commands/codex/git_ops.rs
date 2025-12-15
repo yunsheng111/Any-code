@@ -707,6 +707,15 @@ pub async fn revert_codex_to_prompt(
             )
             .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
+            // Record original HEAD for atomic rollback on failure
+            let original_head = simple_git::git_current_commit(&project_path)
+                .map_err(|e| format!("Failed to get current commit: {}", e))?;
+
+            log::info!(
+                "[Codex Precise Revert] Original HEAD: {} (will rollback here on failure)",
+                &original_head[..8.min(original_head.len())]
+            );
+
             // Load ALL git records for this session
             let all_git_records = load_codex_git_records(&session_id)?;
 
@@ -717,7 +726,7 @@ pub async fn revert_codex_to_prompt(
                 .filter(|r| r.prompt_index >= prompt_index)
                 .collect();
 
-            // Sort by index descending (newest first)
+            // Sort by index descending (newest first) - revert from newest to oldest
             records_to_revert.sort_by(|a, b| b.prompt_index.cmp(&a.prompt_index));
 
             log::info!(
@@ -729,7 +738,7 @@ pub async fn revert_codex_to_prompt(
             // Revert each record's commit_before..commit_after in reverse order
             let mut total_reverted = 0;
             let mut revert_failed = false;
-            let mut first_commit_before: Option<String> = None;
+            let mut failure_message = String::new();
 
             for record in &records_to_revert {
                 // Skip if no commit_after (AI didn't make any changes)
@@ -740,11 +749,6 @@ pub async fn revert_codex_to_prompt(
                         continue;
                     }
                 };
-
-                // Save the first (oldest) commit_before for fallback
-                if first_commit_before.is_none() {
-                    first_commit_before = Some(record.commit_before.clone());
-                }
 
                 log::info!(
                     "[Codex Precise Revert] Reverting prompt #{}: {}..{}",
@@ -776,26 +780,31 @@ pub async fn revert_codex_to_prompt(
                             result.message
                         );
                         revert_failed = true;
+                        failure_message = result.message;
                         break;
                     }
                     Err(e) => {
                         log::warn!("[Codex Precise Revert] Revert failed for prompt #{}: {}", record.prompt_index, e);
                         revert_failed = true;
+                        failure_message = e;
                         break;
                     }
                 }
             }
 
-            // If revert failed due to conflicts, fall back to reset (last resort)
+            // If revert failed, rollback to original HEAD (atomic operation)
             if revert_failed {
-                if let Some(fallback_commit) = first_commit_before {
-                    log::warn!(
-                        "[Codex Precise Revert] Falling back to reset --hard to {}",
-                        &fallback_commit[..8.min(fallback_commit.len())]
-                    );
-                    simple_git::git_reset_hard(&project_path, &fallback_commit)
-                        .map_err(|e| format!("Failed to reset code: {}", e))?;
-                }
+                log::warn!(
+                    "[Codex Precise Revert] Rolling back to original HEAD {} due to failure",
+                    &original_head[..8.min(original_head.len())]
+                );
+                simple_git::git_reset_hard(&project_path, &original_head)
+                    .map_err(|e| format!("Failed to rollback: {}", e))?;
+
+                return Err(format!(
+                    "撤回失败，已回滚到操作前状态。原因: {}",
+                    failure_message
+                ));
             }
 
             log::info!(
@@ -819,6 +828,15 @@ pub async fn revert_codex_to_prompt(
             )
             .map_err(|e| format!("Failed to stash changes: {}", e))?;
 
+            // Record original HEAD for atomic rollback on failure
+            let original_head = simple_git::git_current_commit(&project_path)
+                .map_err(|e| format!("Failed to get current commit: {}", e))?;
+
+            log::info!(
+                "[Codex Precise Revert] Original HEAD: {} (will rollback here on failure)",
+                &original_head[..8.min(original_head.len())]
+            );
+
             // Load ALL git records for this session
             let all_git_records = load_codex_git_records(&session_id)?;
 
@@ -829,7 +847,7 @@ pub async fn revert_codex_to_prompt(
                 .filter(|r| r.prompt_index >= prompt_index)
                 .collect();
 
-            // Sort by index descending (newest first)
+            // Sort by index descending (newest first) - revert from newest to oldest
             records_to_revert.sort_by(|a, b| b.prompt_index.cmp(&a.prompt_index));
 
             log::info!(
@@ -841,7 +859,7 @@ pub async fn revert_codex_to_prompt(
             // Revert each record's commit_before..commit_after in reverse order
             let mut total_reverted = 0;
             let mut revert_failed = false;
-            let mut first_commit_before: Option<String> = None;
+            let mut failure_message = String::new();
 
             for record in &records_to_revert {
                 // Skip if no commit_after (AI didn't make any changes)
@@ -852,11 +870,6 @@ pub async fn revert_codex_to_prompt(
                         continue;
                     }
                 };
-
-                // Save the first (oldest) commit_before for fallback
-                if first_commit_before.is_none() {
-                    first_commit_before = Some(record.commit_before.clone());
-                }
 
                 log::info!(
                     "[Codex Precise Revert] Reverting prompt #{}: {}..{}",
@@ -888,26 +901,31 @@ pub async fn revert_codex_to_prompt(
                             result.message
                         );
                         revert_failed = true;
+                        failure_message = result.message;
                         break;
                     }
                     Err(e) => {
                         log::warn!("[Codex Precise Revert] Revert failed for prompt #{}: {}", record.prompt_index, e);
                         revert_failed = true;
+                        failure_message = e;
                         break;
                     }
                 }
             }
 
-            // If revert failed due to conflicts, fall back to reset (last resort)
+            // If revert failed, rollback to original HEAD (atomic operation)
             if revert_failed {
-                if let Some(fallback_commit) = first_commit_before {
-                    log::warn!(
-                        "[Codex Precise Revert] Falling back to reset --hard to {}",
-                        &fallback_commit[..8.min(fallback_commit.len())]
-                    );
-                    simple_git::git_reset_hard(&project_path, &fallback_commit)
-                        .map_err(|e| format!("Failed to reset code: {}", e))?;
-                }
+                log::warn!(
+                    "[Codex Precise Revert] Rolling back to original HEAD {} due to failure",
+                    &original_head[..8.min(original_head.len())]
+                );
+                simple_git::git_reset_hard(&project_path, &original_head)
+                    .map_err(|e| format!("Failed to rollback: {}", e))?;
+
+                return Err(format!(
+                    "撤回失败，已回滚到操作前状态。原因: {}",
+                    failure_message
+                ));
             }
 
             log::info!(
