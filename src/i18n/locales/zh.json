@@ -1184,7 +1184,10 @@
     "listView": "列表视图",
     "projectListLabel": "项目列表",
     "confirmDelete": "确认删除",
-    "projectLabel": "项目 {{projectName}}，包含 {{sessionCount}} 个会话，创建于 {{createdAt}}"
+    "projectLabel": "项目 {{projectName}}，包含 {{sessionCount}} 个会话，创建于 {{createdAt}}",
+    "sessionStats": "会话统计",
+    "hooksConfig": "钩子配置",
+    "deleteProject": "删除项目"
   },
   "projectSettings": {
     "title": "项目设置",
