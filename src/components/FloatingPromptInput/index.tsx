@@ -8,6 +8,7 @@ import { useImageHandling } from "./hooks/useImageHandling";
 import { useFileSelection } from "./hooks/useFileSelection";
 import { usePromptEnhancement } from "./hooks/usePromptEnhancement";
 import { usePromptSuggestion } from "./hooks/usePromptSuggestion";
+import { useDraftPersistence } from "./hooks/useDraftPersistence";
 import { api } from "@/lib/api";
 import { getEnabledProviders } from "@/lib/promptEnhancementService";
 import { inputReducer, initialState } from "./reducer";
@@ -85,6 +86,15 @@ const FloatingPromptInputInner = (
     ...initialState,
     selectedModel: getInitialModel(),
     executionEngineConfig: externalEngineConfig || initialState.executionEngineConfig,
+  });
+
+  // 草稿持久化 Hook - 确保输入内容在页面切换后不丢失
+  const { saveDraft, clearDraft } = useDraftPersistence({
+    sessionId,
+    onRestore: useCallback((draft: string) => {
+      // 恢复草稿时更新 prompt 状态
+      dispatch({ type: "SET_PROMPT", payload: draft });
+    }, []),
   });
 
   // Initialize enableProjectContext from localStorage
@@ -432,6 +442,8 @@ const FloatingPromptInputInner = (
       dispatch({ type: "RESET_INPUT" });
       setImageAttachments([]);
       setEmbeddedImages([]);
+      // 发送成功后清除草稿
+      clearDraft();
       setTimeout(() => {
         const textarea = state.isExpanded ? expandedTextareaRef.current : textareaRef.current;
         if (textarea) textarea.style.height = 'auto';
@@ -446,6 +458,8 @@ const FloatingPromptInputInner = (
     updateFilePickerQuery(newValue, newCursorPosition);
     dispatch({ type: "SET_PROMPT", payload: newValue });
     dispatch({ type: "SET_CURSOR_POSITION", payload: newCursorPosition });
+    // 保存草稿
+    saveDraft(newValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
