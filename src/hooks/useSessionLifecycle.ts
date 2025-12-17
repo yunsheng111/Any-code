@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { api, type Session } from '@/lib/api';
 import { normalizeUsageData } from '@/lib/utils';
@@ -15,6 +15,8 @@ import { codexConverter } from '@/lib/codexConverter';
  * - 事件监听器管理
  *
  * 从 ClaudeCodeSession.tsx 提取（Phase 3）
+ *
+ * 🔧 修复：添加竞态条件保护，防止快速切换会话时加载状态卡住
  */
 
 interface UseSessionLifecycleConfig {
@@ -54,11 +56,19 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
     processMessageWithTranslation
   } = config;
 
+  // 🔧 修复竞态条件：追踪当前正在加载的会话 ID
+  // 当快速切换会话时，确保只有最新的加载请求能更新状态
+  const loadingSessionIdRef = useRef<string | null>(null);
+
   /**
    * 加载会话历史记录
    */
   const loadSessionHistory = useCallback(async () => {
     if (!session) return;
+
+    // 🔧 记录当前加载的会话 ID，用于竞态条件检查
+    const currentSessionId = session.id;
+    loadingSessionIdRef.current = currentSessionId;
 
     try {
       setIsLoading(true);
@@ -224,10 +234,23 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
         return msg;
       });
 
+      // 🔧 竞态条件检查：确保会话没有在加载过程中切换
+      // 如果用户在加载过程中切换到了另一个会话，丢弃当前结果
+      if (loadingSessionIdRef.current !== currentSessionId) {
+        console.debug('[useSessionLifecycle] Session changed during loading, discarding results for:', currentSessionId);
+        return;
+      }
+
+      // 检查组件是否仍然挂载
+      if (!isMountedRef.current) {
+        console.debug('[useSessionLifecycle] Component unmounted during loading');
+        return;
+      }
+
       // ✨ NEW: Immediate display - no more blocking on translation
       setMessages(processedMessages);
       setRawJsonlOutput(history.map(h => JSON.stringify(h)));
-      
+
       // ⚡ CRITICAL: Set loading to false IMMEDIATELY after messages are set
       // This prevents the "Loading..." screen from showing unnecessarily
       setIsLoading(false);
@@ -249,10 +272,21 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
       // After loading history, we're continuing a conversation
     } catch (err) {
       console.error("Failed to load session history:", err);
+
+      // 🔧 竞态条件检查：只有当前会话的错误才应该显示
+      if (loadingSessionIdRef.current !== currentSessionId) {
+        console.debug('[useSessionLifecycle] Session changed during error, ignoring error for:', currentSessionId);
+        return;
+      }
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setError("加载会话历史记录失败");
       setIsLoading(false);
     }
-  }, [session, setIsLoading, setError, setMessages, setRawJsonlOutput, initializeProgressiveTranslation]);
+  }, [session, isMountedRef, setIsLoading, setError, setMessages, setRawJsonlOutput, initializeProgressiveTranslation]);
 
   /**
    * 检查会话是否仍在活跃状态
@@ -260,6 +294,9 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
   const checkForActiveSession = useCallback(async () => {
     // If we have a session prop, check if it's still active
     if (session) {
+      // 🔧 竞态条件检查：确保会话没有在检查过程中切换
+      const currentSessionId = session.id;
+
       // Skip active session check for Codex sessions
       // Codex sessions are non-interactive and don't maintain active state
       const isCodexSession = (session as any).engine === 'codex';
@@ -267,8 +304,21 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
         return;
       }
 
+      // Skip active session check for Gemini sessions
+      const isGeminiSession = (session as any).engine === 'gemini';
+      if (isGeminiSession) {
+        return;
+      }
+
       try {
         const activeSessions = await api.listRunningClaudeSessions();
+
+        // 🔧 竞态条件检查：API 调用期间会话可能已切换
+        if (loadingSessionIdRef.current !== currentSessionId) {
+          console.debug('[useSessionLifecycle] Session changed during active check, aborting for:', currentSessionId);
+          return;
+        }
+
         const activeSession = activeSessions.find((s: any) => {
           if ('process_type' in s && s.process_type && 'ClaudeSession' in s.process_type) {
             return (s.process_type as any).ClaudeSession.session_id === session.id;
@@ -289,6 +339,8 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
         }
       } catch (err) {
         console.error('Failed to check for active sessions:', err);
+        // 🔧 不要在这里设置错误状态，因为这只是一个可选的检查
+        // 加载历史记录已经成功，检查活跃状态失败不应该影响用户体验
       }
     }
   }, [session, setClaudeSessionId]);
