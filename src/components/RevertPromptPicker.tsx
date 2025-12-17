@@ -83,10 +83,7 @@ export const RevertPromptPicker: React.FC<RevertPromptPickerProps> = ({
           ? await api.getGeminiPromptList(sessionId, projectPath)
           : await api.getPromptList(sessionId, projectId);
 
-        console.log('[RevertPromptPicker] Loaded prompts from backend:', promptRecords);
-
         if (promptRecords.length === 0) {
-          console.log('[RevertPromptPicker] No prompts to revert, closing');
           onClose();
           return;
         }

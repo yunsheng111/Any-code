@@ -188,13 +188,9 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({
     if (scope === 'user' || projectPath) {
       setIsLoading(true);
       setLoadError(null);
-      
-      console.log('[HooksEditor] Loading hooks config:', { scope, projectPath });
-      
+
       api.getHooksConfig(scope, projectPath)
         .then((config) => {
-          console.log('[HooksEditor] Loaded hooks config:', config);
-          console.log('[HooksEditor] Config type:', typeof config, 'is empty:', Object.keys(config || {}).length === 0);
           setHooks(config || {});
           setHasUnsavedChanges(false);
         })
@@ -208,21 +204,12 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({
         });
     } else {
       // No projectPath for project/local scopes
-      console.log('[HooksEditor] Skipping load - no projectPath for scope:', scope);
       setHooks({});
     }
   }, [projectPath, scope]);
 
   // Reset initial mount flag when hooks prop changes
   useEffect(() => {
-    console.log('[HooksEditor] Processing hooks state:', {
-      hooks,
-      hooksKeys: hooks ? Object.keys(hooks) : [],
-      hooksType: typeof hooks,
-      isNull: hooks === null,
-      isUndefined: hooks === undefined
-    });
-
     isInitialMount.current = true;
     setHasUnsavedChanges(false); // Reset unsaved changes when hooks prop changes
 
@@ -244,7 +231,6 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({
     if (hooks && typeof hooks === 'object') {
       allEvents.forEach(event => {
         const matchers = hooks[event] as HookMatcher[] | undefined;
-        console.log(`[HooksEditor] Processing event ${event}:`, { matchers, isArray: Array.isArray(matchers) });
         if (matchers && Array.isArray(matchers)) {
           result[event] = matchers.map(matcher => ({
             ...matcher,
@@ -259,7 +245,6 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({
       });
     }
 
-    console.log('[HooksEditor] Final editableHooks result:', result);
     setEditableHooks(result);
   }, [hooks]);
 

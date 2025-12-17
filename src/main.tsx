@@ -26,7 +26,6 @@ const AppWrapper: React.FC = () => {
       try {
         const { initializeToolRegistry: init } = await import('./lib/toolRegistryInit');
         init();
-        console.log('[AppWrapper] ✅ ToolRegistry initialized asynchronously');
       } catch (error) {
         console.error('[AppWrapper] ToolRegistry initialization failed:', error);
       }

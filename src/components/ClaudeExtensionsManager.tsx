@@ -108,7 +108,6 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
       setLoading(true);
       const result = await api.listPlugins(projectPath);
       setPlugins(result);
-      console.log('[ClaudeExtensions] Loaded', result.length, 'plugins');
     } catch (error) {
       console.error('[ClaudeExtensions] Failed to load plugins:', error);
     } finally {
@@ -122,7 +121,6 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
       setLoading(true);
       const result = await api.listSubagents(projectPath);
       setAgents(result);
-      console.log('[ClaudeExtensions] Loaded', result.length, 'subagents');
     } catch (error) {
       console.error('[ClaudeExtensions] Failed to load agents:', error);
     } finally {
@@ -136,7 +134,6 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
       setLoading(true);
       const result = await api.listAgentSkills(projectPath);
       setSkills(result);
-      console.log('[ClaudeExtensions] Loaded', result.length, 'skills');
     } catch (error) {
       console.error('[ClaudeExtensions] Failed to load skills:', error);
     } finally {

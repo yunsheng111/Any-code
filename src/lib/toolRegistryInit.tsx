@@ -715,9 +715,6 @@ export function initializeToolRegistry(): void {
   // 批量注册所有工具
   toolRegistry.registerBatch(tools);
 
-  // 输出注册统计
-  const stats = toolRegistry.getStats();
-  console.log(`[ToolRegistry] 工具注册完成: ${stats.total} 个工具, ${stats.withPattern} 个模式匹配工具`);
 }
 
 /**
@@ -725,7 +722,6 @@ export function initializeToolRegistry(): void {
  */
 export function registerCustomTool(tool: ToolRenderer): void {
   toolRegistry.register(tool);
-  console.log(`[ToolRegistry] 自定义工具注册: ${tool.name}`);
 }
 
 /**

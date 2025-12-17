@@ -44,9 +44,6 @@ export const useSessionSync = () => {
           run_id?: number;
         }>('claude-session-state', (event) => {
           const { session_id, status } = event.payload;
-
-          console.log(`[SessionSync] Event received: ${status} for session ${session_id}`);
-
           // Find tab with this session (use ref to get latest tabs)
           const tab = tabsRef.current.find(t => t.session?.id === session_id);
 
@@ -54,13 +51,11 @@ export const useSessionSync = () => {
             if (status === 'started') {
               // Session started - set to streaming
               if (tab.state !== 'streaming') {
-                console.log(`[SessionSync] Updating tab ${tab.id} to streaming`);
                 updateTabStreamingStatusRef.current(tab.id, true, session_id);
               }
             } else if (status === 'stopped') {
               // Session stopped - set to idle
               if (tab.state === 'streaming') {
-                console.log(`[SessionSync] Updating tab ${tab.id} to idle`);
                 updateTabStreamingStatusRef.current(tab.id, false, null);
 
                 // If error occurred, log it
@@ -73,8 +68,6 @@ export const useSessionSync = () => {
             console.warn(`[SessionSync] No tab found for session ${session_id}`);
           }
         });
-
-        console.log('[SessionSync] Event listener registered successfully');
       } catch (error) {
         console.error('[SessionSync] Failed to setup event listener:', error);
         // Fallback: Continue without real-time updates
@@ -88,7 +81,6 @@ export const useSessionSync = () => {
     return () => {
       if (unlisten) {
         unlisten();
-        console.log('[SessionSync] Event listener unregistered');
       }
     };
   }, []); // Empty deps - listener only needs to be registered once

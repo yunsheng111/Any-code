@@ -23,7 +23,7 @@ export function useUpdateCheck(): UseUpdateCheckResult {
 
     // 如果不是强制检查，且距离上次检查不足 5 分钟，则跳过
     if (!force && lastChecked && Date.now() - lastChecked.getTime() < 5 * 60 * 1000) {
-      console.log("[useUpdateCheck] Skipping check (recent check < 5 min)");
+      
       const currentVersion = await getCurrentVersion();
       return { status: "up-to-date", currentVersion, skipped: true };
     }

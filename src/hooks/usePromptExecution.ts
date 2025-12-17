@@ -155,15 +155,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
     model: ModelType,
     maxThinkingTokens?: number
   ) => {
-    console.log('[usePromptExecution] handleSendPrompt called with:', {
-      prompt,
-      model,
-      projectPath,
-      claudeSessionId,
-      effectiveSession,
-      maxThinkingTokens
-    });
-
     // ========================================================================
     // 1️⃣ Validation & Queueing
     // ========================================================================
@@ -173,20 +164,8 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
       return;
     }
 
-    // Check if this is a slash command and handle it appropriately
+    // Check if this is a slash command
     const isSlashCommandInput = isSlashCommand(prompt);
-    const trimmedPrompt = prompt.trim();
-
-    if (isSlashCommandInput) {
-      const commandPreview = trimmedPrompt.split('\n')[0];
-      console.log('[usePromptExecution] [OK] Detected slash command, bypassing translation:', {
-        command: commandPreview,
-        model: model,
-        projectPath: projectPath
-      });
-    }
-
-    console.log('[usePromptExecution] Using model:', model);
 
     // If already loading, queue the prompt
     if (isLoading) {
@@ -203,9 +182,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
       setIsLoading(true);
       setError(null);
       hasActiveSessionRef.current = true;
-
-      // Record API start time
-      const apiStartTime = Date.now();
 
       // Record prompt sent (save Git state before sending)
       // Only record real user input, exclude auto Warmup and Skills messages
@@ -236,7 +212,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
               projectPath,
               prompt
             );
-            console.log('[Codex Revert] [OK] Recorded Codex prompt #', recordedPromptIndex, '(existing session)');
+            
             if (codexPendingInfo) {
               codexPendingInfo.promptIndex = recordedPromptIndex;
               codexPendingInfo.sessionId = effectiveSession.id;
@@ -244,7 +220,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           } else if (executionEngine === 'gemini') {
             // 🔧 FIX: Gemini must wait for real CLI session ID from init event
             // Don't record here even for existing sessions - Gemini CLI may generate new session ID
-            console.log('[Gemini Revert] [WAIT] Will record prompt after Gemini CLI session ID is received');
             // geminiPendingInfo will be used in the init event handler
           } else {
             // Claude Code 使用原有的记录 API（写入 .claude-sessions/）
@@ -254,13 +229,13 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
               projectPath,
               prompt
             );
-            console.log('[Prompt Revert] [OK] Recorded Claude prompt #', recordedPromptIndex, '(existing session)');
+            
           }
         } catch (err) {
           console.error('[Prompt Revert] [ERROR] Failed to record prompt:', err);
         }
       } else if (isUserInitiated) {
-        console.log('[Prompt Revert] [WAIT] Will record prompt after session_id is received (new session)');
+        
       }
 
       // Translation state
@@ -322,7 +297,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             // 🔧 FIX: Deduplicate messages
             const messageId = getCodexMessageId(payload);
             if (processedCodexMessages.has(messageId)) {
-              console.log('[usePromptExecution] Skipping duplicate Codex message:', messageId);
               return;
             }
             processedCodexMessages.add(messageId);
@@ -333,7 +307,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
               const event = JSON.parse(payload);
               if (event.type === 'turn.completed') {
                 isTurnCompleted = true;
-                console.log('[usePromptExecution] Detected turn.completed event, will auto-complete session');
               }
             } catch (e) {
               // Ignore parse errors
@@ -372,7 +345,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                         projectPath,
                         promptIndex: idx
                       };
-                      console.log('[usePromptExecution] Recorded Codex prompt after init with index', idx);
                     })
                     .catch(err => {
                       console.warn('[usePromptExecution] Failed to record Codex prompt after init:', err);
@@ -391,7 +363,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             // 🔧 CRITICAL FIX: Auto-complete session when turn.completed is received
             // Don't wait for codex-complete event from backend, as it may be delayed or not sent
             if (isTurnCompleted) {
-              console.log('[usePromptExecution] Auto-completing session after turn.completed');
               // Use setTimeout to ensure message state is updated first
               setTimeout(() => {
                 processCodexComplete();
@@ -411,7 +382,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
             // 🔧 FIX: Wait for pending prompt recording to complete (race condition fix)
             if (pendingPromptRecordingPromise) {
-              console.log('[usePromptExecution] Waiting for pending prompt recording to complete...');
               await pendingPromptRecordingPromise;
               pendingPromptRecordingPromise = null;
             }
@@ -425,7 +395,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                   pendingPrompt.projectPath,
                   pendingPrompt.promptIndex
                 );
-                console.log('[usePromptExecution] Recorded Codex prompt completion #', pendingPrompt.promptIndex);
               } catch (err) {
                 console.warn('[usePromptExecution] Failed to record Codex prompt completion:', err);
               }
@@ -446,14 +415,12 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
           // Helper function to attach session-specific listeners
           const attachCodexSessionListeners = async (sessionId: string) => {
-            console.log('[usePromptExecution] Attaching Codex session-specific listeners for:', sessionId);
-
             const specificOutputUnlisten = await listen<string>(`codex-output:${sessionId}`, (evt) => {
               processCodexOutput(evt.payload);
             });
 
             const specificCompleteUnlisten = await listen<boolean>(`codex-complete:${sessionId}`, async () => {
-              console.log('[usePromptExecution] Received codex-complete (session-specific):', sessionId);
+              
               await processCodexComplete();
             });
 
@@ -466,7 +433,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           const codexSessionInitUnlisten = await listen<{ type: string; session_id: string }>('codex-session-init', async (evt) => {
             // 🔧 FIX: Only process if this tab has an active session
             if (!hasActiveSessionRef.current) return;
-            console.log('[usePromptExecution] Received codex-session-init:', evt.payload);
             if (evt.payload.session_id && !currentCodexSessionId) {
               currentCodexSessionId = evt.payload.session_id;
               // 🔧 FIX: Set claudeSessionId to the backend channel ID for reconnection and cancellation
@@ -486,7 +452,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             if (!hasActiveSessionRef.current) return;
             if (currentCodexSessionId) {
               // 已经有会话ID,不再处理全局事件(应该由会话特定监听器处理)
-              console.log('[usePromptExecution] Ignoring global codex-output (session-specific listener active)');
+              
               return;
             }
             // 只在会话ID未知的早期阶段处理
@@ -507,10 +473,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             if (!hasActiveSessionRef.current) return;
             if (currentCodexSessionId) {
               // 已经有会话ID,不再处理全局完成事件(应该由会话特定监听器处理)
-              console.log('[usePromptExecution] Ignoring global codex-complete (session-specific listener active)');
+              
               return;
             }
-            console.log('[usePromptExecution] Received codex-complete (global fallback)');
+            
             await processCodexComplete();
           });
 
@@ -636,7 +602,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             // 🔧 FIX: Deduplicate messages
             const messageId = getGeminiMessageId(payload);
             if (processedGeminiMessages.has(messageId)) {
-              console.log('[usePromptExecution] Skipping duplicate Gemini message:', messageId);
               return;
             }
             processedGeminiMessages.add(messageId);
@@ -648,14 +613,13 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
               // Gemini CLI echoes back user messages, but we already display them
               const hasToolResult = data.message?.content?.some((c: any) => c.type === 'tool_result');
               if (data.type === 'user' && !hasToolResult) {
-                console.log('[usePromptExecution] Skipping Gemini user message (already shown)');
+                
                 return;
               }
 
               // 🔧 FIX: Skip Gemini CLI stderr messages (debug info, metrics, startup logs)
               // These are system messages with eventType: "stderr" that should not be shown to users
               if (data.type === 'system' && data.geminiMetadata?.eventType === 'stderr') {
-                console.log('[usePromptExecution] Skipping Gemini stderr message');
                 return;
               }
 
@@ -709,11 +673,11 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                               ...newItem, // Update other fields like name
                               input: mergedInput
                             };
-                            // console.log('[Gemini Delta] Merged tool_use:', newItem.id);
+                            // 
                           } else {
                             // New tool call
                             updatedContent.push(newItem);
-                            // console.log('[Gemini Delta] Appended new tool_use:', newItem.id);
+                            // 
                           }
                           merged = true;
                         } else {
@@ -727,10 +691,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                         // 🐛 DEBUG: Log final merged content structure
                         const toolUseCount = updatedContent.filter((c: any) => c.type === 'tool_use').length;
                         if (toolUseCount > 0) {
-                          console.log('[Gemini Delta] Merged message content:', {
-                            toolUseCount,
-                            contentTypes: updatedContent.map((c: any) => c.type)
-                          });
+                          
                         }
 
                         const updatedMsg = {
@@ -782,7 +743,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
             // 🔧 FIX: Wait for pending prompt recording to complete (race condition fix)
             if (pendingGeminiPromptRecordingPromise) {
-              console.log('[usePromptExecution] Waiting for pending Gemini prompt recording to complete...');
               await pendingGeminiPromptRecordingPromise;
               pendingGeminiPromptRecordingPromise = null;
             }
@@ -796,7 +756,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                   pendingPrompt.projectPath,
                   pendingPrompt.promptIndex
                 );
-                console.log('[usePromptExecution] Recorded Gemini prompt completion #', pendingPrompt.promptIndex);
               } catch (err) {
                 console.warn('[usePromptExecution] Failed to record Gemini prompt completion:', err);
               }
@@ -820,14 +779,12 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
           // Helper function to attach session-specific listeners
           const attachGeminiSessionListeners = async (sessionId: string) => {
-            console.log('[usePromptExecution] Attaching Gemini session-specific listeners for:', sessionId);
-
             const specificOutputUnlisten = await listen<string>(`gemini-output:${sessionId}`, (evt) => {
               processGeminiOutput(evt.payload);
             });
 
             const specificCompleteUnlisten = await listen<boolean>(`gemini-complete:${sessionId}`, async () => {
-              console.log('[usePromptExecution] Received gemini-complete (session-specific):', sessionId);
+              
               await processGeminiComplete();
             });
 
@@ -839,8 +796,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           // Listen for session init event (backend emits this with backend channel ID)
           const geminiSessionInitUnlisten = await listen<any>('gemini-session-init', async (evt) => {
             if (!hasActiveSessionRef.current) return;
-            console.log('[usePromptExecution] Received gemini-session-init:', evt.payload);
-
             // 🔧 FIX: evt.payload is already an object, no need to JSON.parse
             const data = evt.payload;
             if (data.session_id && !currentGeminiSessionId) {
@@ -857,8 +812,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           // This is the REAL session ID that should be used for prompt recording
           const geminiCliSessionIdUnlisten = await listen<{ backend_session_id: string; cli_session_id: string }>('gemini-cli-session-id', async (evt) => {
             if (!hasActiveSessionRef.current) return;
-            console.log('[usePromptExecution] Received gemini-cli-session-id:', evt.payload);
-
             const { cli_session_id: realCliSessionId } = evt.payload;
             if (!realCliSessionId) return;
 
@@ -870,7 +823,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
             // 🔧 FIX: Record prompt sent using REAL Gemini CLI session ID
             if (isUserInitiated && geminiPendingInfo && geminiPendingInfo.promptIndex === undefined) {
-              console.log('[Gemini Revert] Recording prompt with REAL CLI session ID:', realCliSessionId);
               pendingGeminiPromptRecordingPromise = api.recordGeminiPromptSent(realCliSessionId, projectPath, geminiPendingInfo.promptText)
                 .then((idx) => {
                   geminiPendingInfo.promptIndex = idx;
@@ -880,7 +832,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                     projectPath,
                     promptIndex: idx
                   };
-                  console.log('[Gemini Revert] Recorded prompt with REAL CLI session ID, index:', idx);
                 })
                 .catch(err => {
                   console.warn('[Gemini Revert] Failed to record prompt with real CLI session ID:', err);
@@ -901,7 +852,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             if (!hasActiveSessionRef.current) return;
             if (currentGeminiSessionId) {
               // 已经有会话ID,不再处理全局事件(应该由会话特定监听器处理)
-              console.log('[usePromptExecution] Ignoring global gemini-output (session-specific listener active)');
+              
               return;
             }
             // 只在会话ID未知的早期阶段处理
@@ -927,10 +878,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             if (!hasActiveSessionRef.current) return;
             if (currentGeminiSessionId) {
               // 已经有会话ID,不再处理全局完成事件(应该由会话特定监听器处理)
-              console.log('[usePromptExecution] Ignoring global gemini-complete (session-specific listener active)');
+              
               return;
             }
-            console.log('[usePromptExecution] Received gemini-complete (global fallback)');
+            
             await processGeminiComplete();
           });
 
@@ -985,8 +936,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
         // Helper: Attach Session-Specific Listeners
         // ====================================================================
         const attachSessionSpecificListeners = async (sid: string) => {
-          console.log('[usePromptExecution] Attaching session-specific listeners for', sid);
-
           // 🔧 FIX: Mark that we've attached session-specific listeners
           hasAttachedSessionListeners = true;
 
@@ -1031,7 +980,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                         prompt
                       );
                       hasRecordedPrompt = true;
-                      console.log('[Prompt Revert] [OK] Recorded user prompt #', recordedPromptIndex, '(session-specific listener)');
+                      
                     } catch (err) {
                       console.error('[Prompt Revert] [ERROR] Failed to record prompt:', err);
                     }
@@ -1048,8 +997,8 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             setError(evt.payload);
           });
 
-          const specificCompleteUnlisten = await listen<boolean>(`claude-complete:${sid}`, (evt) => {
-            console.log('[usePromptExecution] Received claude-complete (scoped):', evt.payload);
+          const specificCompleteUnlisten = await listen<boolean>(`claude-complete:${sid}`, () => {
+            
             processComplete();
           });
 
@@ -1070,7 +1019,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             // This can happen when both global and session-specific listeners receive the same message
             const messageId = getClaudeMessageId(payload);
             if (processedClaudeMessages.has(messageId)) {
-              console.log('[usePromptExecution] Skipping duplicate Claude message:', messageId);
               return;
             }
             processedClaudeMessages.add(messageId);
@@ -1092,13 +1040,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
         // Helper: Process Completion
         // ====================================================================
         const processComplete = async () => {
-          // Calculate API execution time
-          const apiDuration = (Date.now() - apiStartTime) / 1000; // seconds
-          console.log('[usePromptExecution] API duration:', apiDuration.toFixed(1), 'seconds');
+          
 
           // 🔧 FIX: Wait for pending prompt recording to complete (race condition fix)
           if (pendingClaudePromptRecordingPromise) {
-            console.log('[usePromptExecution] Waiting for pending Claude prompt recording to complete...');
             await pendingClaudePromptRecordingPromise;
             pendingClaudePromptRecordingPromise = null;
           }
@@ -1116,7 +1061,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                 projectPath,
                 recordedPromptIndex
               ).then(() => {
-                console.log('[Prompt Revert] Marked prompt # as completed', recordedPromptIndex);
               }).catch(err => {
                 console.error('[Prompt Revert] Failed to mark completed:', err);
               });
@@ -1135,8 +1079,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
           // Reset currentSessionId to allow detection of new session_id
           currentSessionId = null;
-          console.log('[usePromptExecution] Session completed - reset session state for new input');
-
           // Process queued prompts after completion
           if (queuedPromptsRef.current.length > 0) {
             const [nextPrompt, ...remainingPrompts] = queuedPromptsRef.current;
@@ -1167,11 +1109,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                 const msg = JSON.parse(event.payload) as ClaudeStreamMessage;
                 // 只处理新会话的 init 消息(session_id 不同)
                 if (msg.type === 'system' && msg.subtype === 'init' && msg.session_id && msg.session_id !== currentSessionId) {
-                   console.log('[usePromptExecution] Detected NEW session_id from generic listener:', msg.session_id);
                    // Fall through to processing below
                 } else {
                    // ⚠️ 忽略所有其他消息 - 应该由会话特定监听器处理
-                   console.log('[usePromptExecution] Ignoring global claude-output (session-specific listener active)');
+                   
                    return;
                 }
              } catch {
@@ -1189,7 +1130,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
             if (msg.type === 'system' && msg.subtype === 'init' && msg.session_id) {
               if (!currentSessionId || currentSessionId !== msg.session_id) {
-                console.log('[usePromptExecution] Detected new session_id from generic listener:', msg.session_id);
                 currentSessionId = msg.session_id;
                 setClaudeSessionId(msg.session_id);
 
@@ -1215,7 +1155,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                         prompt
                       );
                       hasRecordedPrompt = true;
-                      console.log('[Prompt Revert] [OK] Recorded user prompt #', recordedPromptIndex, '(after system:init)');
+                      
                     } catch (err) {
                       console.error('[Prompt Revert] [ERROR] Failed to record prompt:', err);
                     }
@@ -1262,7 +1202,7 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
                       prompt
                     );
                     hasRecordedPrompt = true;
-                    console.log('[Prompt Revert] [OK] Recorded user prompt #', recordedPromptIndex, '(after user message in JSONL)');
+                    
                   } catch (err) {
                     console.error('[Prompt Revert] [ERROR] Failed to record prompt:', err);
                   }
@@ -1281,10 +1221,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           setError(evt.payload);
         });
 
-        const genericCompleteUnlisten = await listen<boolean>('claude-complete', (evt) => {
+        const genericCompleteUnlisten = await listen<boolean>('claude-complete', () => {
           // 🔧 FIX: Only process if this tab has an active session
           if (!hasActiveSessionRef.current) return;
-          console.log('[usePromptExecution] Received claude-complete (generic):', evt.payload);
+          
           processComplete();
         });
 
@@ -1302,34 +1242,21 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           try {
             const isEnabled = await translationMiddleware.isEnabled();
             if (isEnabled) {
-              console.log('[usePromptExecution] Translation enabled, processing user input...');
               userInputTranslation = await translationMiddleware.translateUserInput(prompt);
               processedPrompt = userInputTranslation.translatedText;
 
               if (userInputTranslation.wasTranslated) {
-                console.log('[usePromptExecution] User input translated:', {
-                  original: userInputTranslation.originalText,
-                  translated: userInputTranslation.translatedText,
-                  language: userInputTranslation.detectedLanguage
-                });
               }
             }
           } catch (translationError) {
             console.error('[usePromptExecution] Translation failed, using original prompt:', translationError);
             // Continue with original prompt if translation fails
           }
-        } else {
-          const commandPreview = trimmedPrompt.split('\n')[0];
-          console.log('[usePromptExecution] [OK] Slash command detected, skipping translation:', {
-            command: commandPreview,
-            translationEnabled: await translationMiddleware.isEnabled()
-          });
         }
 
         // Store the translation result AFTER all processing for response translation
         if (userInputTranslation) {
           setLastTranslationResult(userInputTranslation);
-          console.log('[usePromptExecution] Stored translation result for response processing:', userInputTranslation);
         }
 
         // ========================================================================
@@ -1338,7 +1265,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
 
         // maxThinkingTokens is now passed as API parameter, not added to prompt
         if (maxThinkingTokens) {
-          console.log('[usePromptExecution] Extended thinking enabled with maxThinkingTokens:', maxThinkingTokens);
         }
 
         // ========================================================================
@@ -1438,19 +1364,10 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
         const resumingSession = effectiveSession && !isFirstPrompt;
         const sessionId = resumingSession ? effectiveSession.id : undefined;
 
-        console.log('[usePromptExecution] Executing Gemini with:', {
-          projectPath,
-          prompt: processedPrompt.substring(0, 100) + '...',
-          model: geminiModel || 'gemini-2.5-pro',
-          approvalMode: geminiApprovalMode || 'auto_edit',
-          resumingSession,
-          sessionId
-        });
+        
 
         if (resumingSession) {
-          console.log('[usePromptExecution] Resuming Gemini session:', sessionId);
         } else {
-          console.log('[usePromptExecution] Starting new Gemini session');
           setIsFirstPrompt(false);
         }
 
@@ -1474,7 +1391,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
             projectPath,
             promptIndex: pendingIndex
           };
-          console.log('[Gemini Rewind] Set pending prompt:', { sessionId: pendingSessionId, promptIndex: pendingIndex });
         }
 
       } else {
@@ -1483,11 +1399,8 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
         // ====================================================================
         // 🔧 Fix: 使用 isPlanModeRef.current 获取最新值，确保批准计划后不带 --plan
         const currentPlanMode = isPlanModeRef.current;
-        console.log('[usePromptExecution] Using plan mode:', currentPlanMode);
-
         if (effectiveSession && !isFirstPrompt) {
           // Resume existing session
-          console.log('[usePromptExecution] Resuming session:', effectiveSession.id);
           try {
             await api.resumeClaudeCode(projectPath, effectiveSession.id, processedPrompt, model, currentPlanMode, maxThinkingTokens);
           } catch (resumeError) {
@@ -1497,7 +1410,6 @@ export function usePromptExecution(config: UsePromptExecutionConfig): UsePromptE
           }
         } else {
           // Start new session
-          console.log('[usePromptExecution] Starting new session');
           setIsFirstPrompt(false);
           await api.executeClaudeCode(projectPath, processedPrompt, model, currentPlanMode, maxThinkingTokens);
         }

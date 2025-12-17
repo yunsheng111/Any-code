@@ -12,6 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { api } from './api';
 
+
 export interface ClaudeSDKConfig {
   apiKey?: string;
   baseURL?: string;
@@ -110,7 +111,6 @@ export class ClaudeSDKService {
       });
 
       this.isInitialized = true;
-      console.log('[ClaudeSDK] Initialized successfully');
     } catch (error) {
       console.error('[ClaudeSDK] Initialization failed:', error);
       throw new Error(`Failed to initialize Claude SDK: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -197,9 +197,6 @@ export class ClaudeSDKService {
       // 第三方 API 代理可能需要数组格式的 system 字段
       requestBody.system = [{ type: 'text', text: options.systemPrompt }];
     }
-
-    console.log('[ClaudeSDK] sendMessageDirect to:', endpoint);
-
     try {
       const response = await tauriFetch(endpoint, {
         method: 'POST',

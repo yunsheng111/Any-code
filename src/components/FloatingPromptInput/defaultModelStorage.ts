@@ -33,7 +33,6 @@ export function getDefaultModel(): ModelType | null {
 export function setDefaultModel(model: ModelType): void {
   try {
     localStorage.setItem(STORAGE_KEY, model);
-    console.log("[defaultModelStorage] Default model set to:", model);
   } catch (error) {
     console.error("[defaultModelStorage] Failed to set default model:", error);
   }
@@ -45,7 +44,6 @@ export function setDefaultModel(model: ModelType): void {
 export function clearDefaultModel(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log("[defaultModelStorage] Default model cleared");
   } catch (error) {
     console.error("[defaultModelStorage] Failed to clear default model:", error);
   }

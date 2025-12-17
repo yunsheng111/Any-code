@@ -5,6 +5,7 @@
 
 import { translationMiddleware, type TranslationResult } from './translationMiddleware';
 
+
 export interface TranslationTask {
   id: string;
   content: string;
@@ -81,8 +82,6 @@ export class ProgressiveTranslationManager {
 
     // Sort queue by priority
     this.sortQueue();
-
-    console.log(`[ProgressiveTranslation] Added task ${messageId} with priority ${priority}`);
   }
 
   /**
@@ -109,7 +108,6 @@ export class ProgressiveTranslationManager {
     if (task && task.status === 'pending') {
       task.priority = priority;
       this.sortQueue();
-      console.log(`[ProgressiveTranslation] Updated priority for ${messageId} to ${priority}`);
     }
   }
 
@@ -168,9 +166,6 @@ export class ProgressiveTranslationManager {
     try {
       const controller = new AbortController();
       this.abortControllers.set(task.id, controller);
-
-      console.log(`[ProgressiveTranslation] Processing task ${task.id}`);
-
       // Check if translation is still needed
       if (!this.queue.has(task.id)) {
         return; // Task was removed
@@ -203,10 +198,7 @@ export class ProgressiveTranslationManager {
         this.subscribers.delete(task.id);
       }
 
-      console.log(`[ProgressiveTranslation] Completed task ${task.id}`, {
-        wasTranslated: result.wasTranslated,
-        processingTime: Date.now() - task.createdAt
-      });
+      
 
     } catch (error: any) {
       console.error(`[ProgressiveTranslation] Error processing task ${task.id}:`, error);
@@ -215,7 +207,7 @@ export class ProgressiveTranslationManager {
       if (task.retryCount < 3 && !error.name?.includes('Abort')) {
         task.retryCount++;
         task.status = 'pending';
-        console.log(`[ProgressiveTranslation] Retrying task ${task.id} (attempt ${task.retryCount})`);
+        
       } else {
         task.status = 'error';
         const callback = this.subscribers.get(task.id);
@@ -301,8 +293,6 @@ export class ProgressiveTranslationManager {
     this.queue.clear();
     this.processing.clear();
     this.subscribers.clear();
-
-    console.log('[ProgressiveTranslation] Cleanup completed');
   }
 }
 

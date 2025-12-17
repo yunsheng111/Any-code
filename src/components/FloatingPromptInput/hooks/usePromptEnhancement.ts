@@ -98,9 +98,6 @@ export function usePromptEnhancement({
     }
 
     try {
-      console.log('[getProjectContext] Fetching project context from acemcp...');
-      console.log('[getProjectContext] Has session info:', { sessionId, projectId });
-
       // 🆕 传递会话信息以启用历史上下文感知
       const result = await api.enhancePromptWithContext(
         prompt.trim(),
@@ -112,17 +109,11 @@ export function usePromptEnhancement({
       );
 
       if (result.acemcpUsed && result.contextCount > 0) {
-        console.log('[getProjectContext] Found context:', result.contextCount, 'items');
-        console.log('[getProjectContext] Enhanced prompt length:', result.enhancedPrompt.length);
-        console.log('[getProjectContext] Enhanced prompt preview:', result.enhancedPrompt.substring(0, 500));
-
         // 只返回上下文部分（不包括原提示词）
         const contextMatch = result.enhancedPrompt.match(/--- 项目上下文.*?---\n([\s\S]*)/);
 
         if (contextMatch) {
           const extractedContext = contextMatch[0];
-          console.log('[getProjectContext] Extracted context length:', extractedContext.length);
-          console.log('[getProjectContext] Extracted context preview:', extractedContext.substring(0, 300));
           return extractedContext;
         } else {
           console.warn('[getProjectContext] Failed to extract context with regex');
@@ -138,7 +129,6 @@ export function usePromptEnhancement({
   };
 
   const handleEnhancePromptWithAPI = async (providerId: string) => {
-    console.log('[handleEnhancePromptWithAPI] Starting with provider:', providerId);
     const trimmedPrompt = prompt.trim();
 
     if (!trimmedPrompt) {
@@ -177,37 +167,21 @@ export function usePromptEnhancement({
       const needsHistoryFiltering = messages && messages.length > config.maxMessages;
       const shouldUseDualAPI = enableDualAPI && (needsAcemcpRefinement || needsHistoryFiltering);
 
-      console.log('[handleEnhancePromptWithAPI] Decision:', {
-        enableDualAPI,
-        messagesCount: messages?.length || 0,
-        maxMessages: config.maxMessages,
-        projectContextLength: projectContext?.length || 0,
-        needsAcemcpRefinement,
-        needsHistoryFiltering,
-        shouldUseDualAPI
-      });
-
       if (shouldUseDualAPI) {
         // ✨ 使用双 API 方案（混合策略：acemcp 整理 或 历史筛选）
-        console.log('[handleEnhancePromptWithAPI] Using dual API approach');
-
         result = await enhancePromptWithDualAPI(
           messages || [],
           trimmedPrompt,
           provider,
           projectContext || undefined
         );
-
       } else {
         // 使用传统单次调用方案
-        console.log('[handleEnhancePromptWithAPI] Using single API approach');
-
         // 获取对话上下文
         let context = getConversationContext ? getConversationContext() : undefined;
 
         // 如果有项目上下文，附加到 context 数组
         if (projectContext) {
-          console.log('[handleEnhancePromptWithAPI] Adding project context to conversation context');
           context = context ? [...context, projectContext] : [projectContext];
         }
 

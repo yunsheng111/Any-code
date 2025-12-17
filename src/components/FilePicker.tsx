@@ -86,7 +86,7 @@ const formatFileSize = (bytes: number): string => {
 
 /**
  * FilePicker component - File browser with fuzzy search
- * 
+ *
  * @example
  * <FilePicker
  *   basePath="/Users/example/project"
@@ -155,7 +155,6 @@ export const FilePicker: React.FC<FilePickerProps> = ({
       
       // Immediately show cached results if available
       if (globalSearchCache.has(cacheKey)) {
-        console.log('[FilePicker] Immediately showing cached search results for:', searchQuery);
         setSearchResults(globalSearchCache.get(cacheKey) || []);
         setIsShowingCached(true);
         setError(null);
@@ -256,11 +255,8 @@ export const FilePicker: React.FC<FilePickerProps> = ({
 
   const loadDirectory = async (path: string) => {
     try {
-      console.log('[FilePicker] Loading directory:', path);
-      
       // Check cache first and show immediately
       if (globalDirectoryCache.has(path)) {
-        console.log('[FilePicker] Showing cached contents for:', path);
         setEntries(globalDirectoryCache.get(path) || []);
         setIsShowingCached(true);
         setError(null);
@@ -268,10 +264,9 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         // Only show loading if we don't have cached data
         setIsLoading(true);
       }
-      
+
       // Always fetch fresh data in background
       const contents = await api.listDirectoryContents(path);
-      console.log('[FilePicker] Loaded fresh contents:', contents.length, 'items');
       
       // Cache the results
       globalDirectoryCache.set(path, contents);
@@ -294,14 +289,11 @@ export const FilePicker: React.FC<FilePickerProps> = ({
 
   const performSearch = async (query: string) => {
     try {
-      console.log('[FilePicker] Searching for:', query, 'in:', basePath);
-      
       // Create cache key that includes both query and basePath
       const cacheKey = `${basePath}:${query}`;
-      
+
       // Check cache first and show immediately
       if (globalSearchCache.has(cacheKey)) {
-        console.log('[FilePicker] Showing cached search results for:', query);
         setSearchResults(globalSearchCache.get(cacheKey) || []);
         setIsShowingCached(true);
         setError(null);
@@ -309,10 +301,9 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         // Only show loading if we don't have cached data
         setIsLoading(true);
       }
-      
+
       // Always fetch fresh results in background
       const results = await api.searchFiles(basePath, query);
-      console.log('[FilePicker] Fresh search results:', results.length, 'items');
       
       // Cache the results
       globalSearchCache.set(cacheKey, results);

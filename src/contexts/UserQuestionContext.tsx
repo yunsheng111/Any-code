@@ -151,11 +151,8 @@ export function UserQuestionProvider({ children }: UserQuestionProviderProps) {
 
     // 如果已回答，不再弹窗
     if (answeredQuestionIds.has(questionId)) {
-      console.log("[UserQuestion] Questions already answered, skipping dialog:", questionId);
       return;
     }
-
-    console.log("[UserQuestion] Triggering question dialog:", questionId, questions.length, "questions");
     setPendingQuestion({
       questions,
       questionId,
@@ -191,8 +188,6 @@ export function UserQuestionProvider({ children }: UserQuestionProviderProps) {
     if (!pendingQuestion) return;
 
     const { questionId, questions } = pendingQuestion;
-    console.log("[UserQuestion] Submitting answers:", questionId, answers);
-
     // 标记为已回答
     setAnsweredQuestionIds(prev => {
       const newSet = new Set(prev);
@@ -208,8 +203,6 @@ export function UserQuestionProvider({ children }: UserQuestionProviderProps) {
     // 格式化答案并自动发送给 Claude
     if (sendMessageCallbackRef.current) {
       const message = formatAnswersAsMessage(answers, questions);
-      console.log("[UserQuestion] Auto-sending answer message:", message);
-
       // 延迟发送，确保状态已更新
       setTimeout(() => {
         sendMessageCallbackRef.current?.(message);

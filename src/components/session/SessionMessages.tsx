@@ -194,8 +194,6 @@ export const SessionMessages = forwardRef<SessionMessagesRef, SessionMessagesPro
         return;
       }
 
-      console.log(`[Prompt Navigation] Navigating to prompt #${promptIndex}, group index: ${targetGroupIndex}`);
-
       // 先使用虚拟列表滚动到该索引（让元素渲染出来）
       rowVirtualizer.scrollToIndex(targetGroupIndex, {
         align: 'center',

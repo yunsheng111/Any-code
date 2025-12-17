@@ -273,7 +273,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
   useEffect(() => {
     // Only notify if projectPath is valid and not the initial placeholder
     if (projectPath && projectPath !== initialProjectPath && onProjectPathChange) {
-      console.log('[ClaudeCodeSession] Project path changed, notifying parent:', projectPath);
       onProjectPathChange(projectPath);
     }
   }, [projectPath, initialProjectPath, onProjectPathChange]);
@@ -361,18 +360,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
       setSendMessageCallback(null);
     };
   }, [handleSendPrompt, setSendMessageCallback]);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('[ClaudeCodeSession] State update:', {
-      projectPath,
-      session,
-      extractedSessionInfo,
-      effectiveSession,
-      messagesCount: messages.length,
-      isLoading
-    });
-  }, [projectPath, session, extractedSessionInfo, effectiveSession, messages.length, isLoading]);
 
   // Load recent projects when component mounts (only for new sessions)
   useEffect(() => {
@@ -471,12 +458,7 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
   // - isMountedRef check in message handlers
   // - Session-specific event channels (claude-output:{session_id})
   useEffect(() => {
-    // Only log tab state changes for debugging
-    if (!isActive) {
-      console.log('[ClaudeCodeSession] Tab became inactive, keeping listeners active for ongoing session');
-    } else {
-      console.log('[ClaudeCodeSession] Tab became active');
-    }
+    // Tab state changes are handled silently
   }, [isActive]);
 
   // ✅ Keyboard shortcuts (ESC, Shift+Tab) extracted to useKeyboardShortcuts Hook
@@ -711,7 +693,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
     if (!effectiveSession) return;
 
     try {
-      console.log('[Prompt Revert] Reverting to prompt #', promptIndex, 'with mode:', mode);
 
       const sessionEngine = effectiveSession.engine || executionEngineConfig.engine || 'claude';
       const isCodex = sessionEngine === 'codex';
@@ -739,8 +720,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
             promptIndex,
             mode
           );
-
-      console.log('[Prompt Revert] Revert successful, reloading messages...');
 
       // 重新加载消息历史（根据引擎类型使用不同的 API）
       if (isGemini) {
@@ -815,9 +794,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
         });
 
         setMessages(convertedMessages);
-        console.log('[Prompt Revert] Loaded Gemini messages:', {
-          total: convertedMessages.length,
-        });
       } else {
         // Claude/Codex 使用原有 API
         const history = await api.loadSessionHistory(
@@ -835,40 +811,20 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
             if (msg) convertedMessages.push(msg);
           }
           setMessages(convertedMessages);
-          console.log('[Prompt Revert] Loaded Codex messages:', {
-            total: convertedMessages.length,
-          });
         } else if (Array.isArray(history)) {
           setMessages(history);
-          console.log('[Prompt Revert] Loaded messages:', {
-            total: history.length,
-            hideWarmupSetting: claudeSettings?.hideWarmupMessages
-          });
         } else if (history && typeof history === 'object' && 'messages' in history) {
           setMessages((history as any).messages);
-          console.log('[Prompt Revert] Loaded messages:', {
-            total: (history as any).messages.length,
-            hideWarmupSetting: claudeSettings?.hideWarmupMessages
-          });
         }
       }
 
       // 恢复提示词到输入框（仅在对话撤回模式下）
       if ((mode === 'conversation_only' || mode === 'both') && floatingPromptRef.current && promptText) {
-        console.log('[Prompt Revert] Restoring prompt to input:', promptText);
         floatingPromptRef.current.setPrompt(promptText);
       }
 
-      // 显示成功提示 - 使用标记文本，将在消息渲染时翻译
-      const modeText = {
-        'conversation_only': '__REVERT_CONVERSATION_ONLY__',
-        'code_only': '__REVERT_CODE_ONLY__',
-        'both': '__REVERT_BOTH__'
-      }[mode];
-
-      // 使用简单的成功提示（避免依赖外部 toast 库）
-      setError(''); // 清除错误
-      console.log(`[Prompt Revert] Success: ${modeText}`);
+      // 清除错误
+      setError('');
 
     } catch (error) {
       console.error('[Prompt Revert] Failed to revert:', error);
@@ -884,7 +840,6 @@ const ClaudeCodeSessionInner: React.FC<ClaudeCodeSessionProps> = ({
     isMountedRef.current = true;
 
     return () => {
-      console.log('[ClaudeCodeSession] Component unmounting, cleaning up listeners');
       isMountedRef.current = false;
       isListeningRef.current = false;
 

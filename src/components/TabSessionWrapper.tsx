@@ -33,7 +33,6 @@ const TabSessionWrapperComponent: React.FC<TabSessionWrapperProps> = ({
   // 🔧 NEW: Register cleanup callback for proper resource management
   useEffect(() => {
     const cleanup = async () => {
-      console.log(`[TabSessionWrapper] Cleaning up resources for tab ${tabId}`);
       // This will be called when the tab is closed
       // The ClaudeCodeSession cleanup is handled by its own useEffect
     };
@@ -91,14 +90,8 @@ const TabSessionWrapperComponent: React.FC<TabSessionWrapperProps> = ({
 
   // 当标签页变为非活跃时，保持会话状态在后台
   useEffect(() => {
-    // ✅ FIXED: Removed unused `tab` reference to fix dependency warning
-    // We only need tabId and isActive for this effect
-    if (!isActive) {
-      console.log(`[TabSessionWrapper] Tab ${tabId} is now in background, preserving state`);
-    } else {
-      console.log(`[TabSessionWrapper] Tab ${tabId} is now active`);
-    }
-  }, [isActive, tabId]); // ✅ Dependencies now match usage
+    // Tab state changes are handled silently
+  }, [isActive, tabId]);
 
   return (
     <div

@@ -1,5 +1,6 @@
 import { api, type TranslationConfig } from './api';
 
+
 /**
  * 速率限制配置接口
  */
@@ -207,7 +208,6 @@ export class TranslationMiddleware {
     expired.forEach(key => this.translationCache.delete(key));
 
     if (expired.length > 0) {
-      console.log(`[TranslationMiddleware] Cleaned up ${expired.length} expired cache entries`);
     }
   }
 
@@ -366,8 +366,6 @@ export class TranslationMiddleware {
       ...this.rateLimitConfig,
       ...config
     };
-
-    console.log('[TranslationMiddleware] Rate limits updated:', this.rateLimitConfig);
   }
 
   /**
@@ -412,11 +410,6 @@ export class TranslationMiddleware {
     try {
       this.config = await api.getTranslationConfig();
       this.initialized = true;
-      console.log('[TranslationMiddleware] ✅ Initialized with saved config:', {
-        enabled: this.config.enabled,
-        model: this.config.model,
-        hasApiKey: !!this.config.api_key
-      });
     } catch (error) {
       console.warn('[TranslationMiddleware] ⚠️ Failed to load saved config, using default:', error);
       this.config = {
@@ -428,7 +421,7 @@ export class TranslationMiddleware {
         cache_ttl_seconds: 3600,
       };
       this.initialized = true;
-      console.log('[TranslationMiddleware] ✅ Initialized with default config (translation enabled)');
+      
     }
   }
 
@@ -500,13 +493,7 @@ export class TranslationMiddleware {
     const totalLength = preprocessedText.length;
     const chineseCount = finalChineseChars?.length || 0;
 
-    console.log('[TranslationMiddleware] Chinese detection analysis:', {
-      originalLength: text.length,
-      processedLength: totalLength,
-      chineseCount,
-      originalChineseCount: chineseChars.length,
-      textPreview: text.slice(0, 100)
-    });
+    
 
     // 🔧 优化：更宽松的中文检测逻辑
     // 1. 有1个或以上中文字符就可能是中文（适合短文本）
@@ -579,14 +566,6 @@ export class TranslationMiddleware {
 
     // 检查是否为斜杠命令 - 如果是，直接返回原文不翻译
     if (this.isSlashCommand(userInput)) {
-      const trimmedInput = userInput.trim();
-      const commandPreview = trimmedInput.split('\n')[0];
-      console.log('[TranslationMiddleware] ✅ Detected slash command, skipping translation:', {
-        command: commandPreview,
-        originalLength: userInput.length,
-        trimmedLength: trimmedInput.length
-      });
-      
       // 对于斜杠命令，我们仍然检测语言，但不进行翻译
       const detectedLang = await this.detectLanguage(userInput);
       return {
@@ -611,8 +590,6 @@ export class TranslationMiddleware {
     try {
       // 检测语言
       const detectedLanguage = await this.detectLanguage(userInput);
-      console.log('[TranslationMiddleware] Detected input language:', detectedLanguage);
-
       // 改进的中文检测策略：同时使用语言代码检测和内容检测
       const isChineseByCode = detectedLanguage?.toLowerCase().startsWith('zh');
       const isChineseByContent = this.detectChineseContent(userInput);
@@ -621,32 +598,16 @@ export class TranslationMiddleware {
       const isAsciiOnly = /^[\u0000-\u007F]*$/.test(userInput);
       const shouldTranslate = isChineseByContent || (isChineseByCode && !isAsciiOnly);
 
-      console.log('[TranslationMiddleware] Enhanced language analysis:', {
-        detectedLanguage,
-        isChineseByCode,
-        isChineseByContent,
-        shouldTranslate,
-        inputLength: userInput.length,
-        inputPreview: userInput.slice(0, 100)
-      });
+      
 
       // 如果检测到中文，使用队列化翻译为英文
       if (shouldTranslate) {
-        console.log('[TranslationMiddleware] 🎯 Chinese content detected, initiating translation to English...');
-
         try {
           const translatedText = await this.queueTranslation(userInput, 'en', 3); // 高优先级
 
           // 验证翻译结果不为空且不等于原文
           if (translatedText && translatedText.trim() !== userInput.trim()) {
-            console.log('[TranslationMiddleware] ✅ Translation successful:', {
-              originalLength: userInput.length,
-              translatedLength: translatedText.length,
-              preview: {
-                original: userInput.slice(0, 50),
-                translated: translatedText.slice(0, 50)
-              }
-            });
+            
 
             return {
               translatedText,
@@ -706,7 +667,6 @@ export class TranslationMiddleware {
 
     // 🔧 防重复翻译：检查内容是否过短或为空
     if (!claudeResponse || claudeResponse.trim().length === 0) {
-      console.log('[TranslationMiddleware] ⚠️ Empty or whitespace-only response, skipping translation');
       return {
         translatedText: claudeResponse,
         originalText: claudeResponse,
@@ -717,7 +677,7 @@ export class TranslationMiddleware {
 
     // 🔧 防重复翻译：检查内容是否过短（少于3个字符的内容通常不需要翻译）
     if (claudeResponse.trim().length < 3) {
-      console.log('[TranslationMiddleware] ⚠️ Very short response, skipping translation:', claudeResponse.trim());
+      
       return {
         translatedText: claudeResponse,
         originalText: claudeResponse,
@@ -740,25 +700,14 @@ export class TranslationMiddleware {
     try {
       // 检测响应语言
       const detectedLanguage = await this.detectLanguage(claudeResponse);
-      console.log('[TranslationMiddleware] 🔍 Detected response language:', {
-        language: detectedLanguage,
-        contentLength: claudeResponse.length,
-        preview: claudeResponse.substring(0, 50) + (claudeResponse.length > 50 ? '...' : '')
-      });
+      
 
        // 🔧 优化：只翻译确定为英文的响应
        if (detectedLanguage === 'en') {
-         console.log('[TranslationMiddleware] 🎯 Queuing English response for Chinese translation...');
-
          try {
            const translatedText = await this.queueTranslation(claudeResponse, 'zh', 2); // 中等优先级
 
-           console.log('[TranslationMiddleware] ✅ Response translation successful:', {
-             originalLength: claudeResponse.length,
-             translatedLength: translatedText.length,
-             originalPreview: claudeResponse.substring(0, 50) + '...',
-             translatedPreview: translatedText.substring(0, 50) + '...'
-           });
+           
 
            return {
              translatedText,
@@ -779,7 +728,6 @@ export class TranslationMiddleware {
        }
 
        // 如果响应已经是中文或其他语言，直接返回原文
-       console.log('[TranslationMiddleware] ⏭️ Content not English, returning original text');
        return {
          translatedText: claudeResponse,
          originalText: claudeResponse,
@@ -820,9 +768,6 @@ export class TranslationMiddleware {
       if (validTexts.length === 0) {
         return texts;
       }
-
-      console.log(`[TranslationMiddleware] Processing batch translation for ${validTexts.length} texts`);
-
       // 使用 Promise.all 并行处理，队列系统会自动管理速率限制
       const translationPromises = validTexts.map((text) =>
         this.queueTranslation(text, targetLanguage, 1) // 标准优先级
@@ -842,13 +787,6 @@ export class TranslationMiddleware {
         }
       }
 
-      const stats = this.getPerformanceStats();
-      console.log(`[TranslationMiddleware] Batch translation completed. Performance stats:`, {
-        queueLength: stats.queueLength,
-        cacheHitRate: stats.cacheHitRate,
-        tokenUsageLastMinute: stats.tokenUsageLastMinute
-      });
-
       return results;
 
     } catch (error) {
@@ -864,7 +802,6 @@ export class TranslationMiddleware {
     try {
       await api.updateTranslationConfig(config);
       this.config = config;
-      console.log('[TranslationMiddleware] Configuration updated:', config);
     } catch (error) {
       console.error('[TranslationMiddleware] Failed to update configuration:', error);
       throw error;
@@ -896,7 +833,6 @@ export class TranslationMiddleware {
   public async clearCache(): Promise<void> {
     try {
       await api.clearTranslationCache();
-      console.log('[TranslationMiddleware] Cache cleared');
     } catch (error) {
       console.error('[TranslationMiddleware] Failed to clear cache:', error);
       throw error;

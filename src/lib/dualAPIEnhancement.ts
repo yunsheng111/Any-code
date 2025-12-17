@@ -19,6 +19,7 @@ import { LLMApiService, type LLMProvider } from '@/lib/services/llmApiService';
 import { callEnhancementAPI } from './promptEnhancementService';
 import { loadContextConfig } from './promptContextConfig';
 
+
 // 重新导出类型以保持向后兼容
 export type PromptEnhancementProvider = LLMProvider;
 export { normalizeOpenAIUrl } from '@/lib/services/llmApiService';
@@ -135,9 +136,6 @@ export async function enhancePromptWithDualAPI(
   provider: PromptEnhancementProvider,
   projectContext?: string
 ): Promise<string> {
-
-  console.log('[Dual API] Starting two-step enhancement with provider:', provider.name);
-
   const config = loadContextConfig();
 
   // 过滤有意义的消息
@@ -162,7 +160,7 @@ export async function enhancePromptWithDualAPI(
 
   if (needsAcemcpRefinement) {
     // 优先整理 acemcp 结果（对最终效果影响更大）
-    console.log(`[Dual API] Step 1/2: Refining acemcp context (${projectContext?.length} chars)...`);
+    
 
     try {
       refinedProjectContext = await refineAcemcpContextWithAPI(
@@ -170,7 +168,6 @@ export async function enhancePromptWithDualAPI(
         currentPrompt,
         provider
       );
-      console.log(`[Dual API] Step 1/2 completed: acemcp refined to ${refinedProjectContext.length} chars`);
     } catch (error) {
       console.error('[Dual API] Acemcp refinement failed, using original:', error);
       // 降级：使用原始上下文
@@ -189,8 +186,6 @@ export async function enhancePromptWithDualAPI(
 
   } else if (needsHistoryFiltering) {
     // 没有 acemcp 需要整理，但历史消息需要筛选
-    console.log(`[Dual API] Step 1/2: Extracting relevant context from ${meaningful.length} messages...`);
-
     try {
       selectedContext = await extractContextWithAPI(
         meaningful,
@@ -198,7 +193,6 @@ export async function enhancePromptWithDualAPI(
         config.maxMessages,
         provider
       );
-      console.log(`[Dual API] Step 1/2 completed: ${selectedContext.length} messages selected`);
     } catch (error) {
       console.error('[Dual API] Step 1 failed, falling back to recent messages:', error);
       selectedContext = meaningful
@@ -211,7 +205,7 @@ export async function enhancePromptWithDualAPI(
 
   } else {
     // 都不需要第一次 API 调用
-    console.log(`[Dual API] Skipping step 1: acemcp OK, messages (${meaningful.length}) <= ${config.maxMessages}`);
+    
     selectedContext = meaningful.map(msg => {
       const text = extractTextFromContent(msg.message?.content || []);
       return `${msg.type === 'user' ? '用户' : '助手'}: ${text}`;
@@ -226,17 +220,11 @@ export async function enhancePromptWithDualAPI(
   // ==========================================
   // 🔥 第二次 API 调用：优化提示词
   // ==========================================
-
-  console.log('[Dual API] Step 2/2: Enhancing prompt with selected context...');
-
   const enhancedPrompt = await callEnhancementAPI(
     provider,  // 🔑 使用同一个提供商
     currentPrompt,
     selectedContext
   );
-
-  console.log('[Dual API] Step 2/2 completed');
-
   return enhancedPrompt;
 }
 
@@ -271,8 +259,6 @@ ${messageList}
 请选择最相关的 ${maxCount} 条消息，返回索引 JSON 数组。`;
 
   // 3️⃣ 调用 API
-  console.log(`[Context Extraction] Analyzing ${messages.length} messages with ${provider.name}...`);
-
   // 使用特殊的 system prompt（专门用于上下文提取）
   const response = await callContextExtractionAPI(
     provider,
@@ -282,9 +268,6 @@ ${messageList}
 
   // 4️⃣ 解析返回的索引
   const indices = parseIndicesFromResponse(response, messages.length, maxCount);
-
-  console.log('[Context Extraction] Selected indices:', indices);
-
   // 5️⃣ 提取对应的消息
   const selectedMessages = indices
     .map(idx => messages[idx])
@@ -422,9 +405,6 @@ function shouldRefineAcemcpResult(projectContext?: string): boolean {
   const exceedsLength = projectContext.length > ACEMCP_REFINEMENT_THRESHOLDS.minContentLength;
 
   const shouldRefine = exceedsSnippetCount || exceedsLength;
-
-  console.log(`[Acemcp Refinement] Check: snippets=${snippetCount}, length=${projectContext.length}, shouldRefine=${shouldRefine}`);
-
   return shouldRefine;
 }
 
@@ -449,9 +429,6 @@ acemcp 搜索结果（原始）：
 ${acemcpResult}
 
 请整理上述代码片段，保留与用户提示词最相关的内容。`;
-
-  console.log(`[Acemcp Refinement] Calling API to refine ${acemcpResult.length} chars...`);
-
   // 调用 API 整理
   const response = await callContextExtractionAPI(
     provider,

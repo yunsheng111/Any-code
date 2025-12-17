@@ -686,14 +686,11 @@ export const api = {
     try {
       // Get Claude sessions
       const claudeSessions = await invoke<Session[]>('get_project_sessions', { projectId });
-      console.log('[SessionList] Claude sessions:', claudeSessions.length);
 
       // Get Codex sessions and filter by project path
       const codexSessions = await this.listCodexSessions();
-      console.log('[SessionList] All Codex sessions:', codexSessions.length);
 
       const targetPath = projectPath || claudeSessions[0]?.project_path;
-      console.log('[SessionList] Project path for filtering:', targetPath);
 
       // Normalize paths for comparison (handle Windows backslashes and case insensitivity)
       const normalize = (p: string) => p ? p.replace(/\\/g, '/').replace(/\/$/, '').toLowerCase() : '';
@@ -721,16 +718,9 @@ export const api = {
           last_message_timestamp: cs.lastMessageTimestamp,
         }));
 
-      console.log('[SessionList] Filtered Codex sessions:', filteredCodexSessions.length);
-
       // Merge and sort by creation time
       const allSessions = [...claudeSessions.map(s => ({ ...s, engine: 'claude' as const })), ...filteredCodexSessions];
       allSessions.sort((a, b) => b.created_at - a.created_at);
-
-      console.log('[SessionList] Total sessions:', allSessions.length, {
-        claude: claudeSessions.length,
-        codex: filteredCodexSessions.length
-      });
 
       return allSessions;
     } catch (error) {
@@ -827,14 +817,11 @@ export const api = {
   /**
    * Reads the Claude settings file
    * @returns Promise resolving to the settings object
-   */
+  */
   async getClaudeSettings(): Promise<ClaudeSettings> {
     try {
-      const result = await invoke<ClaudeSettings>("get_claude_settings");
-      console.log("Raw result from get_claude_settings:", result);
-      
       // Due to #[serde(flatten)] in Rust, the result is directly the settings object
-      return result;
+      return await invoke<ClaudeSettings>("get_claude_settings");
     } catch (error) {
       console.error("Failed to get Claude settings:", error);
       throw error;
@@ -956,7 +943,6 @@ export const api = {
    */
   async saveClaudeSettings(settings: ClaudeSettings): Promise<string> {
     try {
-      console.log("Saving Claude settings:", settings);
       return await invoke<string>("save_claude_settings", { settings });
     } catch (error) {
       console.error("Failed to save Claude settings:", error);
@@ -972,7 +958,6 @@ export const api = {
    */
   async updateThinkingMode(enabled: boolean, tokens?: number): Promise<string> {
     try {
-      console.log("Updating thinking mode:", { enabled, tokens });
       return await invoke<string>("update_thinking_mode", { enabled, tokens });
     } catch (error) {
       console.error("Failed to update thinking mode:", error);
@@ -1000,7 +985,6 @@ export const api = {
    */
   async updateClaudeExecutionConfig(config: ClaudeExecutionConfig): Promise<void> {
     try {
-      console.log("Updating Claude execution config:", config);
       return await invoke<void>("update_claude_execution_config", { config });
     } catch (error) {
       console.error("Failed to update Claude execution config:", error);
@@ -1246,10 +1230,7 @@ export const api = {
    */
   async mcpList(): Promise<MCPServer[]> {
     try {
-      console.log("API: Calling mcp_list...");
-      const result = await invoke<MCPServer[]>("mcp_list");
-      console.log("API: mcp_list returned:", result);
-      return result;
+      return await invoke<MCPServer[]>("mcp_list");
     } catch (error) {
       console.error("API: Failed to list MCP servers:", error);
       throw error;

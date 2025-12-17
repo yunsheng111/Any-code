@@ -51,8 +51,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
     result: TranslationResult,
     messageIndex: number
   ) => {
-    console.log('[useMessageTranslation] ✅ Translation completed for message:', messageId);
-
     // Update translation state
     setTranslationStates(prev => ({
       ...prev,
@@ -130,7 +128,7 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
   const processMessageWithTranslation = useCallback(async (
     message: ClaudeStreamMessage,
     payload: string,
-    currentTranslationResult?: TranslationResult
+    _currentTranslationResult?: TranslationResult
   ) => {
     try {
       // Don't process if component unmounted
@@ -156,18 +154,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
       try {
         const isEnabled = await translationMiddleware.isEnabled();
 
-        // 使用传递的翻译结果或状态中的结果
-        const effectiveTranslationResult = currentTranslationResult || lastTranslationResult;
-
-        console.log('[useMessageTranslation] Translation debug:', {
-          isEnabled,
-          hasCurrentResult: !!currentTranslationResult,
-          hasStateResult: !!lastTranslationResult,
-          hasEffectiveResult: !!effectiveTranslationResult,
-          messageType: message.type,
-          messageContent: message.content ? 'has content' : 'no content'
-        });
-
         // 🔧 EXPANDED MESSAGE TYPE SUPPORT: Cover all possible Claude Code response types
         const isClaudeResponse = message.type === "assistant" ||
                                message.type === "result" ||
@@ -176,8 +162,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                                !!(message.content || message.message?.content || (message as any).text || (message as any).result || (message as any).summary || (message as any).error);
 
         if (isEnabled && isClaudeResponse) {
-          console.log('[useMessageTranslation] Found Claude response message, checking translation conditions...');
-
           // 🌟 COMPREHENSIVE CONTENT EXTRACTION STRATEGY
           // This ensures we capture ALL possible text content from Claude Code SDK responses
           let textContent = '';
@@ -254,42 +238,25 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
             contentSources.push('summary_field');
           }
 
-          console.log('[useMessageTranslation] Content extraction results:', {
-            textContentLength: textContent.length,
-            contentSources,
-            messageType: message.type,
-            hasMessageContent: !!message.message?.content,
-            textPreview: textContent.substring(0, 100)
-          });
+          
 
           if (textContent.trim()) {
-            console.log('[useMessageTranslation] 🔄 Processing content for translation...', {
-              contentLength: textContent.length,
-              messageType: message.type,
-              preview: textContent.substring(0, 100) + (textContent.length > 100 ? '...' : '')
-            });
+            
 
             // Attempt translation - the middleware will handle language detection and decide whether to translate
             const responseTranslation = await translationMiddleware.translateClaudeResponse(textContent);
 
             if (responseTranslation.wasTranslated) {
-                console.log('[useMessageTranslation] ✅ Claude response translated:', {
-                  original: responseTranslation.originalText.substring(0, 50) + '...',
-                  translated: responseTranslation.translatedText.substring(0, 50) + '...',
-                  detectedLanguage: responseTranslation.detectedLanguage
-                });
+                
 
                 // 🔧 COMPREHENSIVE MESSAGE UPDATE STRATEGY
                 // Update the message content based on where we found the original content
-                console.log('[useMessageTranslation] Updating message content with translation using sources:', contentSources);
-
                 // Update based on the content source that was found
                 const primarySource = contentSources[0];
 
                 switch (primarySource) {
                   case 'direct_content':
                     processedMessage.content = responseTranslation.translatedText;
-                    console.log('[useMessageTranslation] ✅ Updated direct content');
                     break;
 
                   case 'array_content':
@@ -302,7 +269,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                         }
                         return item;
                       });
-                      console.log('[useMessageTranslation] ✅ Updated array content');
                     }
                     break;
 
@@ -311,7 +277,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                       ...message.content,
                       text: responseTranslation.translatedText
                     };
-                    console.log('[useMessageTranslation] ✅ Updated content.text');
                     break;
 
                   case 'message_content_string':
@@ -320,7 +285,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                         ...message.message,
                         content: [{ type: 'text', text: responseTranslation.translatedText }]
                       };
-                      console.log('[useMessageTranslation] ✅ Updated message.content string');
                     }
                     break;
 
@@ -337,28 +301,23 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                           return item;
                         })
                       };
-                      console.log('[useMessageTranslation] ✅ Updated message.content array');
                     }
                     break;
 
                   case 'direct_text':
                     (processedMessage as any).text = responseTranslation.translatedText;
-                    console.log('[useMessageTranslation] ✅ Updated direct text');
                     break;
 
                   case 'result_field':
                     (processedMessage as any).result = responseTranslation.translatedText;
-                    console.log('[useMessageTranslation] ✅ Updated result field');
                     break;
 
                   case 'error_field':
                     (processedMessage as any).error = responseTranslation.translatedText;
-                    console.log('[useMessageTranslation] ✅ Updated error field');
                     break;
 
                   case 'summary_field':
                     (processedMessage as any).summary = responseTranslation.translatedText;
-                    console.log('[useMessageTranslation] ✅ Updated summary field');
                     break;
 
                   default:
@@ -367,7 +326,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                       type: 'text',
                       text: responseTranslation.translatedText
                     }];
-                    console.log('[useMessageTranslation] ⚠️ Used fallback content structure');
                 }
 
                 // Add translation metadata
@@ -376,13 +334,6 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
                   detectedLanguage: responseTranslation.detectedLanguage,
                   originalText: responseTranslation.originalText
                 };
-
-                console.log('[useMessageTranslation] Final processed message structure:', {
-                  type: processedMessage.type,
-                  hasContent: !!processedMessage.content,
-                  hasMessage: !!processedMessage.message,
-                  messageContentLength: processedMessage.message?.content?.length || 'none'
-                });
             }
           }
         }
@@ -396,11 +347,9 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
         // Use the standardized usage normalization function to handle field name mapping
         if (processedMessage.message?.usage) {
           processedMessage.message.usage = normalizeUsageData(processedMessage.message.usage);
-          console.log('[useMessageTranslation] ✅ Normalized message.usage data:', processedMessage.message.usage);
         }
         if (processedMessage.usage) {
           processedMessage.usage = normalizeUsageData(processedMessage.usage);
-          console.log('[useMessageTranslation] ✅ Normalized top-level usage data:', processedMessage.usage);
         }
         onMessagesUpdate((prev) => [...prev, processedMessage]);
       } catch (usageError) {
@@ -428,12 +377,8 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
       setTranslationEnabled(isEnabled);
 
       if (!isEnabled) {
-        console.log('[useMessageTranslation] Progressive translation disabled');
         return;
       }
-
-      console.log('[useMessageTranslation] 🔄 Initializing progressive translation for', messages.length, 'messages');
-
       // Initialize translation states
       const initialStates: TranslationState = {};
 
@@ -472,7 +417,7 @@ export function useMessageTranslation(config: UseMessageTranslationConfig): UseM
       });
 
       setTranslationStates(initialStates);
-      console.log('[useMessageTranslation] ✅ Progressive translation initialized:', Object.keys(initialStates).length, 'translatable messages');
+      
 
     } catch (error) {
       console.error('[useMessageTranslation] Failed to initialize progressive translation:', error);

@@ -87,7 +87,6 @@ const CodeBlockRenderer: React.FC<CodeBlockRendererProps> = ({ language, code, s
 
     try {
       await copyTextToClipboard(code);
-      console.log('[CodeBlock] Copied to clipboard:', code.substring(0, 50) + '...');
       setCopyState('success');
     } catch (error) {
       console.error('[CodeBlock] Copy failed:', error);

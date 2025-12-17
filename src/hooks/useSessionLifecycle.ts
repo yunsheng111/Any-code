@@ -64,14 +64,13 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
       setIsLoading(true);
       setError(null);
 
-      console.log('[useSessionLifecycle] Loading session:', session.id, 'engine:', (session as any).engine);
+      
       const engine = (session as any).engine;
 
       let history: ClaudeStreamMessage[] = [];
 
       // Handle Gemini sessions differently
       if (engine === 'gemini') {
-        console.log('[useSessionLifecycle] Loading Gemini session detail...');
         try {
           const geminiDetail = await api.getGeminiSessionDetail(session.project_path, session.id);
 
@@ -157,7 +156,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
 
             return messages;
           });
-          console.log('[useSessionLifecycle] Loaded Gemini messages:', history.length);
         } catch (geminiErr) {
           console.error('[useSessionLifecycle] Failed to load Gemini session:', geminiErr);
           throw geminiErr;
@@ -172,7 +170,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
 
         // If Codex, convert events to messages
         if (engine === 'codex') {
-          console.log('[useSessionLifecycle] Converting Codex events:', history.length);
           codexConverter.reset();
           const convertedMessages: ClaudeStreamMessage[] = [];
 
@@ -183,7 +180,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
               }
           }
           history = convertedMessages;
-          console.log('[useSessionLifecycle] Converted to messages:', history.length);
         }
       }
 
@@ -229,7 +225,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
       });
 
       // ✨ NEW: Immediate display - no more blocking on translation
-      console.log('[useSessionLifecycle] 🚀 Displaying messages immediately:', loadedMessages.length);
       setMessages(processedMessages);
       setRawJsonlOutput(history.map(h => JSON.stringify(h)));
       
@@ -283,7 +278,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
 
         if (activeSession) {
           // Session is still active, reconnect to its stream
-          console.log('[useSessionLifecycle] Found active session, reconnecting:', session.id);
           // IMPORTANT: Set claudeSessionId before reconnecting
           setClaudeSessionId(session.id);
 
@@ -303,11 +297,8 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
    * 重新连接到活跃会话
    */
   const reconnectToSession = useCallback(async (sessionId: string) => {
-    console.log('[useSessionLifecycle] Reconnecting to session:', sessionId);
-
     // Prevent duplicate listeners
     if (isListeningRef.current) {
-      console.log('[useSessionLifecycle] Already listening to session, skipping reconnect');
       return;
     }
 
@@ -324,8 +315,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
     // Set up session-specific listeners
     const outputUnlisten = await listen<string>(`claude-output:${sessionId}`, async (event) => {
       try {
-        console.log('[useSessionLifecycle] Received claude-output on reconnect:', event.payload);
-
         if (!isMountedRef.current) return;
 
         // Store raw JSONL
@@ -350,8 +339,7 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
       }
     });
 
-    const completeUnlisten = await listen<boolean>(`claude-complete:${sessionId}`, async (event) => {
-      console.log('[useSessionLifecycle] Received claude-complete on reconnect:', event.payload);
+    const completeUnlisten = await listen<boolean>(`claude-complete:${sessionId}`, async () => {
       if (isMountedRef.current) {
         setIsLoading(false);
         // 🔧 FIX: Reset all session state when session completes
@@ -363,8 +351,6 @@ export function useSessionLifecycle(config: UseSessionLifecycleConfig): UseSessi
         // The old session-specific listeners won't work if a new session ID is assigned
         unlistenRefs.current.forEach(u => u && typeof u === 'function' && u());
         unlistenRefs.current = [];
-
-        console.log('[useSessionLifecycle] Reconnect session completed - reset listener state for new input');
       }
     });
 

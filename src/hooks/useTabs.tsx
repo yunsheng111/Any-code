@@ -123,8 +123,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
       
       setTabs(validTabs);
       setActiveTabId(validActiveTabId);
-      
-      console.log(`[useTabs] Restored ${validTabs.length} tabs from storage`);
     } catch (error) {
       console.error('[useTabs] Failed to restore tabs:', error);
       localStorage.removeItem(STORAGE_KEY);
@@ -172,15 +170,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
         .trim();
 
       // 调试日志（可在浏览器控制台查看）
-      console.log('[TabTitle Debug]', {
-        originalPath: path,
-        isWindowsPath,
-        separator,
-        segments,
-        projectName,
-        formattedName
-      });
-
       return formattedName;
     };
 
@@ -248,7 +237,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     const cleanup = cleanupCallbacksRef.current.get(tabId);
     if (cleanup) {
       try {
-        console.log(`[useTabs] Executing cleanup for tab ${tabId}`);
         await cleanup();
       } catch (error) {
         console.error(`[useTabs] Cleanup failed for tab ${tabId}:`, error);
@@ -339,7 +327,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
   const openSessionInBackground = useCallback((session: Session): { tabId: string; isNew: boolean } => {
     const existingTab = tabs.find(tab => tab.session?.id === session.id);
     if (existingTab) {
-      console.log(`[useTabs] Session ${session.id} already exists`);
       return { tabId: existingTab.id, isNew: false };
     }
 
@@ -385,12 +372,8 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
 
     const setupListener = async () => {
       unlisten = await onWindowSyncEvent((event) => {
-        console.log('[useTabs] Received sync event:', event.type);
-
         if (event.type === 'tab_attached') {
           // A detached window wants to merge back to main window
-          console.log('[useTabs] Handling tab_attached:', event);
-
           // Remove from detached set
           detachedTabsRef.current.delete(event.tabId);
 
@@ -403,7 +386,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
             setTabs(prev => {
               // Check if tab already exists
               if (prev.some(t => t.session?.id === session.id)) {
-                console.log('[useTabs] Session already exists in tabs, skipping');
                 return prev;
               }
 
@@ -491,8 +473,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
 
       // Close the tab in main window (force close since it's now in a separate window)
       await forceCloseTab(tabId);
-
-      console.log('[useTabs] Tab detached to window:', windowLabel);
       return windowLabel;
     } catch (error) {
       console.error('[useTabs] Failed to detach tab:', error);
@@ -537,8 +517,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
         sessionId: session?.id,
         projectPath: projectPath || session?.project_path,
       });
-
-      console.log('[useTabs] Created new session as window:', windowLabel);
       return windowLabel;
     } catch (error) {
       console.error('[useTabs] Failed to create new session as window:', error);

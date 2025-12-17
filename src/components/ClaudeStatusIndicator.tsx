@@ -53,7 +53,6 @@ const loadCachedStatus = (): StatusInfo | null => {
         if (statusInfo.lastChecked) {
           statusInfo.lastChecked = new Date(statusInfo.lastChecked);
         }
-        console.log('Using cached Claude status, age:', Math.round(age / 1000 / 60), 'minutes');
         return statusInfo;
       }
     }
@@ -71,7 +70,6 @@ const saveCachedStatus = (statusInfo: StatusInfo) => {
       timestamp: Date.now()
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-    console.log('Cached Claude status:', statusInfo.status);
   } catch (error) {
     console.warn('Failed to save Claude status cache:', error);
   }
@@ -123,12 +121,6 @@ export const ClaudeStatusIndicator: React.FC<ClaudeStatusIndicatorProps> = ({
 
     // Only show costs for active sessions to prevent accumulation on inactive sessions
     if (!sessionActivity.shouldTrackCost && !sessionActivity.isCurrentSession) {
-      console.log('[ClaudeStatusIndicator] Session not active, skipping cost display', {
-        sessionId,
-        activityState: sessionActivity.activityState,
-        isCurrentSession: sessionActivity.isCurrentSession,
-        shouldTrackCost: sessionActivity.shouldTrackCost
-      });
       return 0;
     }
 
@@ -171,13 +163,11 @@ export const ClaudeStatusIndicator: React.FC<ClaudeStatusIndicatorProps> = ({
     const cachedStatus = loadCachedStatus();
     if (cachedStatus) {
       setStatusInfo(cachedStatus);
-      console.log('Using cached status, skipping check');
       return; // Use cache, no need to check - this is the key optimization
     }
-    
+
     // Only check if no cache available and not already checking
     if (!isChecking) {
-      console.log('No cache available, performing initial check');
       checkClaudeStatus();
     }
   }, []);
@@ -225,7 +215,6 @@ export const ClaudeStatusIndicator: React.FC<ClaudeStatusIndicatorProps> = ({
       
       // Save to cache for future sessions (24 hour cache)
       saveCachedStatus(newStatus);
-      console.log('Claude status check completed:', newStatus.status);
     } catch (error) {
       console.error('Failed to check Claude status:', error);
       const errorStatus = {

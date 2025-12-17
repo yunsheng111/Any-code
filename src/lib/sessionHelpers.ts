@@ -15,6 +15,7 @@ import type { ClaudeStreamMessage } from '@/types/claude';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { loadContextConfig, type PromptContextConfig } from './promptContextConfig';
 
+
 // ============================================================================
 // Type Definitions
 // ============================================================================
@@ -335,7 +336,6 @@ export function handleClosePreview(currentState: PreviewState): PreviewState {
  * @returns Updated preview state
  */
 export function handlePreviewUrlChange(url: string, currentState: PreviewState): PreviewState {
-  console.log('[sessionHelpers] Preview URL changed to:', url);
   return {
     ...currentState,
     previewUrl: url

@@ -134,10 +134,7 @@ export const TabManager: React.FC<TabManagerProps> = ({
   // 🆕 NEW: 将标签页弹出为独立窗口
   const handleDetachTab = useCallback(async (tabId: string) => {
     try {
-      const windowLabel = await detachTab(tabId);
-      if (windowLabel) {
-        console.log('[TabManager] Tab detached to window:', windowLabel);
-      }
+      await detachTab(tabId);
     } catch (error) {
       console.error('[TabManager] Failed to detach tab:', error);
     }
@@ -149,15 +146,11 @@ export const TabManager: React.FC<TabManagerProps> = ({
       // 先让用户选择项目路径
       const selectedPath = await selectProjectPath();
       if (!selectedPath) {
-        console.log('[TabManager] User cancelled project selection');
         return;
       }
 
       // 使用选择的路径创建独立窗口
-      const windowLabel = await createNewTabAsWindow(undefined, selectedPath);
-      if (windowLabel) {
-        console.log('[TabManager] Created new session window:', windowLabel);
-      }
+      await createNewTabAsWindow(undefined, selectedPath);
     } catch (error) {
       console.error('[TabManager] Failed to create new session window:', error);
     }
@@ -174,26 +167,22 @@ export const TabManager: React.FC<TabManagerProps> = ({
 
     // Priority 1: Initial session provided (highest priority)
     if (initialSession) {
-      console.log('[TabManager] Creating tab for initial session:', initialSession.id);
       createNewTab(initialSession);
       return;
     }
 
     // Priority 2: Initial project path provided
     if (initialProjectPath) {
-      console.log('[TabManager] Creating tab for initial project:', initialProjectPath);
       createNewTab(undefined, initialProjectPath);
       return;
     }
 
     // Priority 3: Tabs restored from localStorage (only if no new operation)
     if (tabs.length > 0 && !isNewOperation) {
-      console.log('[TabManager] Tabs restored from localStorage');
       return;
     }
 
     // Priority 4: No initial data - show empty state
-    console.log('[TabManager] No initial data, showing empty state');
   }, []); // Empty deps - only run once on mount
 
   return (

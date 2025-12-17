@@ -40,13 +40,10 @@ export const RunningClaudeSessions: React.FC<RunningClaudeSessionsProps> = ({
         await loadRunningSessions();
 
         // 监听 claude-session-state 事件进行实时更新
-        unlistenFn = await listen<any>('claude-session-state', async (event) => {
-          console.log('[RunningClaudeSessions] Received claude-session-state event:', event.payload);
+        unlistenFn = await listen<any>('claude-session-state', async () => {
           // 会话状态变化时，重新加载列表
           await loadRunningSessions();
         });
-
-        console.log('[RunningClaudeSessions] Event listener setup complete');
       } catch (err) {
         console.error('[RunningClaudeSessions] Failed to setup event listener:', err);
       }
@@ -70,7 +67,6 @@ export const RunningClaudeSessions: React.FC<RunningClaudeSessionsProps> = ({
         const prevJson = JSON.stringify(prev);
         const newJson = JSON.stringify(sessions);
         if (prevJson !== newJson) {
-          console.log('[RunningClaudeSessions] Data changed, updating...');
           return sessions;
         }
         return prev; // 返回旧状态，不触发重新渲染

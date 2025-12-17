@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
+
 // TODO: These imports will be used when implementing actual Tauri webview
 // import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 // import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -91,9 +92,9 @@ const WebviewPreviewComponent: React.FC<WebviewPreviewProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMaximized, onToggleMaximize]);
 
-  // Debug: Log initial URL on mount
+  // Initialize on mount
   useEffect(() => {
-    console.log('[WebviewPreview] Component mounted with initialUrl:', initialUrl, 'isMaximized:', isMaximized);
+    // Component mounted
   }, []);
 
   // Focus management for full screen mode
@@ -126,8 +127,7 @@ const WebviewPreviewComponent: React.FC<WebviewPreviewProps> = ({
       // Validate URL
       const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
       const finalUrl = urlObj.href;
-      
-      console.log('[WebviewPreview] Navigating to:', finalUrl);
+
       setCurrentUrl(finalUrl);
       setInputUrl(finalUrl);
       setHasError(false);
@@ -152,12 +152,10 @@ const WebviewPreviewComponent: React.FC<WebviewPreviewProps> = ({
 
   const handleGoBack = () => {
     // In real implementation, this would call webview.goBack()
-    console.log("Go back");
   };
 
   const handleGoForward = () => {
     // In real implementation, this would call webview.goForward()
-    console.log("Go forward");
   };
 
   const handleRefresh = () => {

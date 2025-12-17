@@ -10,6 +10,7 @@
 
 import { ClaudeMessage, ClaudeResponse } from './claudeSDK';
 
+
 export interface CacheEntry {
   id: string;
   promptHash: string;
@@ -331,12 +332,12 @@ export class IntelligentPromptCache {
       this.updateAccessOrder(key);
       this.updateAnalytics(true, entry.usage.input_tokens + entry.usage.output_tokens);
 
-      console.log(`[PromptCache] Cache HIT - Key: ${key.slice(0, 8)}, Similarity: ${entry.similarity?.toFixed(2) || 1.00}`);
+      
       return entry;
     }
 
     this.updateAnalytics(false);
-    console.log(`[PromptCache] Cache MISS - Key: ${key.slice(0, 8)}`);
+    
     return null;
   }
 
@@ -382,7 +383,7 @@ export class IntelligentPromptCache {
       this.saveToStorage();
     }
 
-    console.log(`[PromptCache] Cached response - Key: ${key.slice(0, 8)}, Tokens: ${response.usage.input_tokens + response.usage.output_tokens}`);
+    
   }
 
   /**
@@ -504,8 +505,6 @@ export class IntelligentPromptCache {
 
       // Clean expired entries
       this.cleanExpired();
-
-      console.log(`[PromptCache] Loaded ${this.cache.size} entries from storage`);
     } catch (error) {
       console.warn('[PromptCache] Failed to load from storage:', error);
     }

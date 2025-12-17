@@ -1,4 +1,8 @@
 /**
+
+
+
+/**
  * 提示词上下文配置服务
  * 管理提示词优化时的上下文提取配置
  */
@@ -110,7 +114,7 @@ export function loadContextConfig(): PromptContextConfig {
 
     // 🆕 版本检查：如果版本不匹配，重置为默认配置
     if (!parsed._version || parsed._version < CONFIG_VERSION) {
-      console.log(`[PromptContextConfig] Config version outdated (${parsed._version} < ${CONFIG_VERSION}), resetting to defaults`);
+      
       saveConfigWithVersion(DEFAULT_CONTEXT_CONFIG);
       return DEFAULT_CONTEXT_CONFIG;
     }

@@ -7,6 +7,7 @@
 
 import { LLMApiService, type LLMProvider } from '@/lib/services/llmApiService';
 
+
 // 重新导出类型以保持向后兼容
 export type PromptEnhancementProvider = LLMProvider;
 export type { ApiFormat } from '@/lib/services/llmApiService';
@@ -217,9 +218,6 @@ ${context && context.length > 0 ? `\n【当前对话上下文】\n${context.join
 直接返回优化后的提示词，不要添加任何解释、评论或元信息。`;
 
   const userPrompt = `请优化以下提示词：\n\n${prompt}`;
-
-  console.log('[PromptEnhancement] Calling API:', provider.name);
-
   try {
     // 使用统一的 LLM API 服务
     const response = await LLMApiService.call(provider, {

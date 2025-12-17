@@ -182,15 +182,13 @@ export function PlanModeProvider({
 
     // 如果已审批或已拒绝，不再弹窗
     if (approvedPlanIds.has(planId)) {
-      console.log("[PlanMode] Plan already approved, skipping dialog:", planId);
       return;
     }
     if (rejectedPlanIds.has(planId)) {
-      console.log("[PlanMode] Plan already rejected, skipping dialog:", planId);
       return;
     }
 
-    console.log("[PlanMode] Triggering plan approval:", planId, plan.substring(0, 100));
+    
     setPendingApproval({
       plan,
       planId,
@@ -209,8 +207,6 @@ export function PlanModeProvider({
     if (!pendingApproval) return;
 
     const { planId } = pendingApproval;
-    console.log("[PlanMode] Plan approved:", planId);
-
     // 标记为已审批
     setApprovedPlanIds(prev => {
       const newSet = new Set(prev);
@@ -229,7 +225,6 @@ export function PlanModeProvider({
 
     // 自动发送提示词，让 Claude 开始执行
     if (sendPromptCallbackRef.current) {
-      console.log("[PlanMode] Auto-sending execution prompt");
       // 延迟发送，确保状态已更新
       setTimeout(() => {
         sendPromptCallbackRef.current?.("请开始执行上述计划。");
@@ -242,8 +237,6 @@ export function PlanModeProvider({
     if (!pendingApproval) return;
 
     const { planId } = pendingApproval;
-    console.log("[PlanMode] Plan rejected, continuing planning:", planId);
-
     // 标记为已拒绝
     setRejectedPlanIds(prev => {
       const newSet = new Set(prev);

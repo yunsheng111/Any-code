@@ -122,14 +122,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
       // Merge all sessions
       const allSessions = [...claudeCodexSessions, ...geminiSessions];
-
-      console.log('[ProjectContext] Loaded sessions:', allSessions.length);
-      console.log('[ProjectContext] Session engines:', {
-        claude: allSessions.filter(s => s.engine === 'claude').length,
-        codex: allSessions.filter(s => s.engine === 'codex').length,
-        gemini: allSessions.filter(s => s.engine === 'gemini').length,
-        undefined: allSessions.filter(s => !s.engine).length,
-      });
+      
 
       setSessions(allSessions);
       setSelectedProject(project);

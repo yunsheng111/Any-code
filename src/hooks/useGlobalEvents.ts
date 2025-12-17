@@ -49,7 +49,6 @@ export const useGlobalEvents = () => {
       try {
         unlisten = await listen<boolean>('claude-complete', async (event) => {
           if (event.payload === true) {
-            console.log('[GlobalEvents] Session completed, refreshing lists...');
             await loadProjects();
             if (selectedProject) {
               await refreshSessions();

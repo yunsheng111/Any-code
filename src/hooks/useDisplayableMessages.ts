@@ -129,11 +129,7 @@ export function useDisplayableMessages(
           }
         }
       });
-      console.log('[useDisplayableMessages] Hiding Warmup:', {
-        totalMessages: messages.length,
-        warmupIndices: Array.from(warmupIndices),
-        hideWarmupSetting: hideWarmupMessages
-      });
+      
     }
 
     return messages.filter((message, index) => {

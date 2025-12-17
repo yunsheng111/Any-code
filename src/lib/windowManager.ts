@@ -7,6 +7,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -59,8 +60,6 @@ export async function createSessionWindow(params: CreateSessionWindowParams): Pr
     if (!result.success) {
       throw new Error('Window creation failed');
     }
-
-    console.log('[WindowManager] Created session window:', result.window_label);
     return result.window_label;
   } catch (error) {
     console.error('[WindowManager] Failed to create session window:', error);
@@ -76,7 +75,6 @@ export async function createSessionWindow(params: CreateSessionWindowParams): Pr
 export async function closeSessionWindow(windowLabel: string): Promise<void> {
   try {
     await invoke('close_session_window', { windowLabel });
-    console.log('[WindowManager] Closed session window:', windowLabel);
   } catch (error) {
     console.error('[WindowManager] Failed to close session window:', error);
     throw error;
@@ -175,7 +173,6 @@ const WINDOW_SYNC_EVENT = 'window-sync';
 export async function emitWindowSyncEvent(event: WindowSyncEvent): Promise<void> {
   try {
     await emit(WINDOW_SYNC_EVENT, event);
-    console.log('[WindowManager] Emitted sync event:', event.type, event.tabId);
   } catch (error) {
     console.error('[WindowManager] Failed to emit sync event:', error);
   }
@@ -191,7 +188,6 @@ export async function onWindowSyncEvent(
   callback: (event: WindowSyncEvent) => void
 ): Promise<UnlistenFn> {
   return listen<WindowSyncEvent>(WINDOW_SYNC_EVENT, (event) => {
-    console.log('[WindowManager] Received sync event:', event.payload.type);
     callback(event.payload);
   });
 }
@@ -226,14 +222,6 @@ export function parseSessionWindowParams(): {
     : undefined;
   const engineParam = params.get('engine');
   const engine = (engineParam === 'claude' || engineParam === 'codex') ? engineParam : undefined;
-
-  console.log('[WindowManager] Parsed session window params:', {
-    tabId,
-    sessionId,
-    projectPath,
-    engine,
-  });
-
   return {
     isSessionWindow: true,
     tabId,

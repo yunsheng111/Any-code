@@ -28,7 +28,6 @@ export function useFileSelection({
   // Detect @ symbol for file picker
   const detectAtSymbol = (newValue: string, newCursorPosition: number) => {
     if (projectPath?.trim() && newValue.length > prompt.length && newValue[newCursorPosition - 1] === '@') {
-      console.log('[useFileSelection] @ detected, projectPath:', projectPath);
       setShowFilePicker(true);
       setFilePickerQuery("");
       onCursorPositionChange(newCursorPosition);

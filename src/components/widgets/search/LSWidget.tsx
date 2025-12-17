@@ -113,13 +113,6 @@ export const LSWidget: React.FC<LSWidgetProps> = ({ path, result }) => {
   // 如果有结果，使用 LSResultWidget 显示
   if (result) {
     const resultContent = extractResultContent(result);
-
-    // 调试日志
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[LSWidget] result:', result);
-      console.log('[LSWidget] extractedContent:', resultContent?.substring(0, 200));
-    }
-
     const { files, dirs } = countItems(resultContent || '');
     const totalItems = files + dirs;
 

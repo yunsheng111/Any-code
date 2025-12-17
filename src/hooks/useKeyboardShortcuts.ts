@@ -49,10 +49,8 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig): void {
 
           // Show revert dialog
           if (onShowRevertDialog) {
-            console.log('[KeyboardShortcuts] Double ESC detected - showing revert dialog');
             onShowRevertDialog();
           } else {
-            console.log('[KeyboardShortcuts] Double ESC detected - no handler registered');
           }
         }
 
@@ -78,7 +76,6 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig): void {
 
         // Toggle Plan Mode (single press, as per official Claude Code)
           onTogglePlanMode();
-          console.log('[KeyboardShortcuts] Shift+Tab detected - toggling Plan Mode');
       }
     };
 

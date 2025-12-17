@@ -84,7 +84,6 @@ export const Settings: React.FC<SettingsProps> = ({
   // ⚡ 监听切换到提示词API标签的事件（内部事件）
   useEffect(() => {
     const handleSwitchTab = () => {
-      console.log('[Settings] Switching to prompt-api tab');
       setActiveTab("prompt-api");
     };
 

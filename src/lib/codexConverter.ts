@@ -18,6 +18,7 @@ import type {
 } from '@/types/codex';
 import type { ClaudeStreamMessage } from '@/types/claude';
 
+
 /**
  * Maps Codex tool names to Claude Code tool names
  * This ensures consistent tool rendering between realtime stream and history loading
@@ -135,8 +136,6 @@ export class CodexEventConverter {
    * @returns ClaudeStreamMessage or null if event should be skipped
    */
   convertEventObject(event: CodexEvent): ClaudeStreamMessage | null {
-      console.log('[CodexConverter] Processing event:', event.type, event);
-
       switch (event.type) {
         case 'thread.started':
           this.threadId = event.thread_id;
@@ -153,7 +152,6 @@ export class CodexEventConverter {
         case 'turn.started':
           // Reset turn state
           this.currentTurnUsage = null;
-          console.log('[CodexConverter] Skipping turn.started event');
           return null; // Don't display turn start events
 
         case 'turn.completed':
@@ -208,7 +206,6 @@ export class CodexEventConverter {
           if (typeof (event as any)?.payload?.model === 'string') {
             this.activeModel = (event as any).payload.model;
           }
-          console.log('[CodexConverter] Skipping turn_context event');
           return null;
 
         default:
@@ -229,7 +226,7 @@ export class CodexEventConverter {
         // Codex sends both event_msg.agent_reasoning (quick notification) and
         // response_item.reasoning (full details with encrypted content)
         // We only process response_item.reasoning to avoid duplicates
-        console.log('[CodexConverter] Skipping event_msg.agent_reasoning (handled by response_item.reasoning)');
+        
         return null;
 
       case 'token_count':
@@ -250,11 +247,10 @@ export class CodexEventConverter {
         // Line 5: {"type":"event_msg","payload":{"type":"user_message","message":"..."}}
         //
         // We skip event_msg.user_message to avoid duplication
-        console.log('[CodexConverter] ⚠️ Skipping event_msg.user_message (duplicates response_item with role=user)');
+        
         return null;
 
       default:
-        console.log('[CodexConverter] Skipping event_msg with payload.type:', payload.type);
         return null;
     }
   }
@@ -378,7 +374,6 @@ export class CodexEventConverter {
 
     if (payloadType === 'ghost_snapshot') {
       // Ghost commit snapshot - skip for now
-      console.log('[CodexConverter] Skipping ghost_snapshot');
       return null;
     }
 
@@ -398,7 +393,6 @@ export class CodexEventConverter {
       );
 
       if (isEnvContext) {
-        console.log('[CodexConverter] Filtered out environment context message');
         return null;
       }
     }
@@ -441,13 +435,7 @@ export class CodexEventConverter {
       engine: 'codex' as const,
     };
 
-    console.log('[CodexConverter] Converted response_item:', {
-      eventType: event.type,
-      role: payload.role,
-      contentTypes: content?.map((c: any) => c.type),
-      contentCount: content.length,
-      messageType: message.type
-    });
+    
 
     return message;
   }
@@ -715,7 +703,6 @@ export class CodexEventConverter {
         if (phase === 'completed') {
           return this.convertMcpToolCall(item, phase, metadata, eventTimestamp);
         }
-        console.log('[CodexConverter] Skipping mcp_tool_call in phase:', phase);
         return null;
 
       case 'web_search':

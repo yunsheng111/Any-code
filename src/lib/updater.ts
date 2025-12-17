@@ -4,6 +4,7 @@ import { getVersion } from "@tauri-apps/api/app";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import type { Update } from "@tauri-apps/plugin-updater";
 
+
 export type UpdateChannel = "stable" | "beta";
 
 export interface UpdateInfo {
@@ -92,14 +93,8 @@ export async function checkForUpdate(
   try {
     // 动态引入，避免在未安装插件时导致打包期问题
     const { check } = await import("@tauri-apps/plugin-updater");
-
-    console.log('[Updater] Checking for updates...');
     const currentVersion = await getCurrentVersion();
-    console.log('[Updater] Current version:', currentVersion);
-
     const update = await check({ timeout: opts.timeout ?? 30000 } as any);
-    console.log('[Updater] Check result:', update ? `Update available: ${update.version}` : 'Up to date');
-
     if (!update) {
       return { status: "up-to-date", currentVersion };
     }

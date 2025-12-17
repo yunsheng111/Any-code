@@ -9,6 +9,7 @@
 
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 
+
 /**
  * LLM API 格式类型
  */
@@ -350,9 +351,6 @@ export class LLMApiService {
     // 1. 确定 API 格式
     const format = provider.apiFormat || detectApiFormat(provider.apiUrl);
     const strategy = getApiStrategy(format);
-
-    console.log(`[LLMApiService] Calling ${format} API: ${provider.name}`);
-
     // 2. URL 规范化
     const normalizedUrl = strategy.normalizeUrl(provider.apiUrl);
 

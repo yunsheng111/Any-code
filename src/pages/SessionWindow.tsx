@@ -77,8 +77,6 @@ export const SessionWindow: React.FC = () => {
             engine: engine || undefined,
           };
 
-          console.log('[SessionWindow] Session prepared:', session.id, 'engine:', engine);
-
           setState(prev => ({
             ...prev,
             session,
@@ -110,8 +108,6 @@ export const SessionWindow: React.FC = () => {
 
     const setupListener = async () => {
       unlisten = await onWindowSyncEvent((event) => {
-        console.log('[SessionWindow] Received sync event:', event);
-
         // Handle relevant events
         if (event.tabId === state.tabId) {
           switch (event.type) {
@@ -196,8 +192,6 @@ export const SessionWindow: React.FC = () => {
             session: sessionWithEngine,
           },
         });
-
-        console.log('[SessionWindow] Emitted tab_attached event, closing window');
 
         // Close this window after a short delay to ensure event is processed
         setTimeout(async () => {
