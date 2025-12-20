@@ -29,6 +29,16 @@ pub struct PluginInfo {
     pub components: PluginComponents,
 }
 
+/// Simple component item (command, skill, agent)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginComponentItem {
+    /// Component name
+    pub name: String,
+    /// Component description
+    pub description: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PluginComponents {
@@ -37,6 +47,15 @@ pub struct PluginComponents {
     pub skills: usize,
     pub hooks: usize,
     pub mcp_servers: usize,
+    /// Detailed command list
+    #[serde(default)]
+    pub command_list: Vec<PluginComponentItem>,
+    /// Detailed skill list
+    #[serde(default)]
+    pub skill_list: Vec<PluginComponentItem>,
+    /// Detailed agent list
+    #[serde(default)]
+    pub agent_list: Vec<PluginComponentItem>,
 }
 
 /// Represents a Subagent file
@@ -386,6 +405,9 @@ pub async fn list_plugins(_project_path: Option<String>) -> Result<Vec<PluginInf
                                         skills: 0,
                                         hooks: 0,
                                         mcp_servers: 0,
+                                        command_list: Vec::new(),
+                                        skill_list: Vec::new(),
+                                        agent_list: Vec::new(),
                                     }
                                 };
 
@@ -480,7 +502,7 @@ fn scan_plugins_directory(dir: &Path) -> Result<Vec<PluginInfo>, String> {
     Ok(plugins)
 }
 
-/// Count plugin components
+/// Count plugin components and collect detailed list
 fn count_plugin_components(plugin_dir: &Path) -> PluginComponents {
     let mut components = PluginComponents {
         commands: 0,
@@ -488,45 +510,99 @@ fn count_plugin_components(plugin_dir: &Path) -> PluginComponents {
         skills: 0,
         hooks: 0,
         mcp_servers: 0,
+        command_list: Vec::new(),
+        skill_list: Vec::new(),
+        agent_list: Vec::new(),
     };
 
-    // Count commands
+    // Collect commands
     let commands_dir = plugin_dir.join("commands");
     if commands_dir.exists() {
-        components.commands = WalkDir::new(&commands_dir)
+        for entry in WalkDir::new(&commands_dir)
             .max_depth(2)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("md"))
-            .count();
+        {
+            let path = entry.path();
+            let name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+
+            // Read description from file
+            let description = if let Ok(content) = fs::read_to_string(path) {
+                parse_description_from_content(&content)
+            } else {
+                None
+            };
+
+            components.command_list.push(PluginComponentItem { name, description });
+        }
+        components.commands = components.command_list.len();
     }
 
-    // Count agents
+    // Collect agents
     let agents_dir = plugin_dir.join("agents");
     if agents_dir.exists() {
-        components.agents = WalkDir::new(&agents_dir)
+        for entry in WalkDir::new(&agents_dir)
             .max_depth(2)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("md"))
-            .count();
+        {
+            let path = entry.path();
+            let name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+
+            let description = if let Ok(content) = fs::read_to_string(path) {
+                parse_description_from_content(&content)
+            } else {
+                None
+            };
+
+            components.agent_list.push(PluginComponentItem { name, description });
+        }
+        components.agents = components.agent_list.len();
     }
 
-    // Count skills
+    // Collect skills
     let skills_dir = plugin_dir.join("skills");
     if skills_dir.exists() {
-        components.skills = WalkDir::new(&skills_dir)
-            .max_depth(2)
+        for entry in WalkDir::new(&skills_dir)
+            .max_depth(3) // skills/<skill-name>/SKILL.md
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| {
                 e.path()
                     .file_name()
                     .and_then(|s| s.to_str())
-                    .map(|s| s.ends_with("SKILL.md"))
+                    .map(|s| s == "SKILL.md")
                     .unwrap_or(false)
             })
-            .count();
+        {
+            let path = entry.path();
+            // Get skill name from parent directory
+            let name = path
+                .parent()
+                .and_then(|p| p.file_name())
+                .and_then(|s| s.to_str())
+                .unwrap_or("unknown")
+                .to_string();
+
+            let description = if let Ok(content) = fs::read_to_string(path) {
+                parse_description_from_content(&content)
+            } else {
+                None
+            };
+
+            components.skill_list.push(PluginComponentItem { name, description });
+        }
+        components.skills = components.skill_list.len();
     }
 
     // Check for hooks

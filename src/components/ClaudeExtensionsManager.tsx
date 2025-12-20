@@ -6,7 +6,11 @@ import {
   Package,
   Sparkles,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  Terminal,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,6 +44,11 @@ interface ClaudeExtensionsManagerProps {
   onBack?: () => void;
 }
 
+interface PluginComponentItem {
+  name: string;
+  description?: string;
+}
+
 interface PluginInfo {
   name: string;
   description?: string;
@@ -54,6 +63,9 @@ interface PluginInfo {
     skills: number;
     hooks: number;
     mcpServers: number;
+    commandList: PluginComponentItem[];
+    skillList: PluginComponentItem[];
+    agentList: PluginComponentItem[];
   };
 }
 
@@ -90,6 +102,20 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
   const [skills, setSkills] = useState<SkillFile[]>([]);
   const [activeTab, setActiveTab] = useState("plugins");
   const [loading, setLoading] = useState(false);
+  const [expandedPlugins, setExpandedPlugins] = useState<Set<string>>(new Set());
+
+  // Toggle plugin expansion
+  const togglePluginExpand = (pluginPath: string) => {
+    setExpandedPlugins(prev => {
+      const next = new Set(prev);
+      if (next.has(pluginPath)) {
+        next.delete(pluginPath);
+      } else {
+        next.add(pluginPath);
+      }
+      return next;
+    });
+  };
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -285,7 +311,12 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
             </div>
           ) : plugins.length > 0 ? (
             <div className="space-y-2">
-              {plugins.map((plugin) => (
+              {plugins.map((plugin) => {
+                const isExpanded = expandedPlugins.has(plugin.path);
+                const hasDetails = (plugin.components.commandList?.length > 0) ||
+                                   (plugin.components.skillList?.length > 0) ||
+                                   (plugin.components.agentList?.length > 0);
+                return (
                 <Card key={plugin.path} className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1">
@@ -301,19 +332,114 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
                               {t('extensions.enabled')}
                             </Badge>
                           )}
+                          {plugin.marketplace && (
+                            <Badge variant="secondary" className="text-xs">
+                              {plugin.marketplace}
+                            </Badge>
+                          )}
                         </div>
                         {plugin.description && (
                           <p className="text-sm text-muted-foreground line-clamp-2">
                             {plugin.description}
                           </p>
                         )}
+                        {/* Component counts with expand button */}
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          {plugin.components.commands > 0 && <span>{plugin.components.commands} {t('extensions.commands')}</span>}
-                          {plugin.components.agents > 0 && <span>{plugin.components.agents} {t('extensions.agents')}</span>}
-                          {plugin.components.skills > 0 && <span>{plugin.components.skills} {t('extensions.skills')}</span>}
+                          {hasDetails && (
+                            <button
+                              onClick={() => togglePluginExpand(plugin.path)}
+                              className="flex items-center gap-1 hover:text-foreground transition-colors"
+                            >
+                              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                            </button>
+                          )}
+                          {plugin.components.commands > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Terminal className="h-3 w-3" />
+                              {plugin.components.commands} {t('extensions.commands')}
+                            </span>
+                          )}
+                          {plugin.components.skills > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Zap className="h-3 w-3" />
+                              {plugin.components.skills} {t('extensions.skills')}
+                            </span>
+                          )}
+                          {plugin.components.agents > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Bot className="h-3 w-3" />
+                              {plugin.components.agents} {t('extensions.agents')}
+                            </span>
+                          )}
                           {plugin.components.hooks > 0 && <span>{t('extensions.hooks')}</span>}
                           {plugin.components.mcpServers > 0 && <span>MCP</span>}
                         </div>
+
+                        {/* Expanded details */}
+                        {isExpanded && (
+                          <div className="mt-3 space-y-3 border-t pt-3">
+                            {/* Commands list */}
+                            {plugin.components.commandList?.length > 0 && (
+                              <div>
+                                <h5 className="text-xs font-medium mb-2 flex items-center gap-1">
+                                  <Terminal className="h-3 w-3" />
+                                  {t('extensions.commands')}
+                                </h5>
+                                <div className="space-y-1 ml-4">
+                                  {plugin.components.commandList.map((cmd, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      <code className="text-primary">/{cmd.name}</code>
+                                      {cmd.description && (
+                                        <span className="text-muted-foreground ml-2">- {cmd.description}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Skills list */}
+                            {plugin.components.skillList?.length > 0 && (
+                              <div>
+                                <h5 className="text-xs font-medium mb-2 flex items-center gap-1">
+                                  <Zap className="h-3 w-3" />
+                                  {t('extensions.skills')}
+                                </h5>
+                                <div className="space-y-1 ml-4">
+                                  {plugin.components.skillList.map((skill, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      <span className="font-medium">{skill.name}</span>
+                                      {skill.description && (
+                                        <span className="text-muted-foreground ml-2 line-clamp-1">- {skill.description}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Agents list */}
+                            {plugin.components.agentList?.length > 0 && (
+                              <div>
+                                <h5 className="text-xs font-medium mb-2 flex items-center gap-1">
+                                  <Bot className="h-3 w-3" />
+                                  {t('extensions.agents')}
+                                </h5>
+                                <div className="space-y-1 ml-4">
+                                  {plugin.components.agentList.map((agent, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      <span className="font-medium">{agent.name}</span>
+                                      {agent.description && (
+                                        <span className="text-muted-foreground ml-2">- {agent.description}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {plugin.author && (
                           <p className="text-xs text-muted-foreground mt-1">{t('extensions.author')}: {plugin.author}</p>
                         )}
@@ -328,7 +454,7 @@ export const ClaudeExtensionsManager: React.FC<ClaudeExtensionsManagerProps> = (
                     </Button>
                   </div>
                 </Card>
-              ))}
+              )})}
             </div>
           ) : (
             <Card className="p-6 text-center border-dashed">
