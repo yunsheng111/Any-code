@@ -732,14 +732,19 @@ async fn spawn_claude_process(
     let session_id_holder: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
     let run_id_holder: Arc<Mutex<Option<i64>>> = Arc::new(Mutex::new(None));
 
-    // Store the child process in the global state (for backward compatibility)
+    // 🔒 CRITICAL FIX: 移除单例限制，支持多会话并发
+    // 旧逻辑会在启动新会话时杀死现有会话，导致并发问题
+    // 现在每个会话独立运行，通过 ProcessRegistry 统一管理
+    //
+    // 注意：ClaudeProcessState 仅作为备选取消机制保留（存储最新的进程）
+    // 但不再杀死现有进程
     let claude_state = app.state::<ClaudeProcessState>();
     {
         let mut current_process = claude_state.current_process.lock().await;
-        // If there's already a process running, kill it first
-        if let Some(mut existing_child) = current_process.take() {
-            log::warn!("Killing existing Claude process before starting new one");
-            let _ = existing_child.kill().await;
+        // 🔒 FIX: 不再杀死现有进程，允许多会话并发运行
+        // 旧进程会通过 ProcessRegistry 继续被跟踪和管理
+        if current_process.is_some() {
+            log::info!("Another Claude process is running, but allowing concurrent sessions");
         }
         *current_process = Some(child);
     }
