@@ -1011,6 +1011,8 @@ pub struct ClaudeWslModeInfo {
     pub native_available: bool,
     /// Actual mode being used (detection result)
     pub actual_mode: String,
+    /// Whether the current platform is Windows (WSL options are only relevant on Windows)
+    pub is_windows: bool,
 }
 
 /// Get Claude WSL mode configuration
@@ -1041,15 +1043,15 @@ fn do_get_claude_wsl_mode_config() -> ClaudeWslModeInfo {
     };
 
     #[cfg(target_os = "windows")]
-    let (wsl_available, available_distros, native_available) = {
+    let (wsl_available, available_distros, native_available, is_windows) = {
         let wsl = wsl_utils::is_wsl_available();
         let distros = wsl_utils::get_wsl_distros();
         let native = wsl_utils::is_native_claude_available();
-        (wsl, distros, native)
+        (wsl, distros, native, true)
     };
 
     #[cfg(not(target_os = "windows"))]
-    let (wsl_available, available_distros, native_available) = (false, vec![], true);
+    let (wsl_available, available_distros, native_available, is_windows) = (false, vec![], true, false);
 
     let wsl_claude_version = if runtime.enabled {
         wsl_utils::get_wsl_claude_version(runtime.distro.as_deref())
@@ -1069,6 +1071,7 @@ fn do_get_claude_wsl_mode_config() -> ClaudeWslModeInfo {
         wsl_claude_version,
         native_available,
         actual_mode: actual_mode.to_string(),
+        is_windows,
     }
 }
 
