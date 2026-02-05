@@ -51,48 +51,97 @@ export const GeminiSessionDetailViewer: React.FC<GeminiSessionDetailViewerProps>
   // 进入历史会话详情时，默认滚动到最底部以显示最新消息
   useEffect(() => {
     if (!session) return;
-    
+
     // 获取滚动容器
     const el = messagesScrollRef.current;
     if (!el) return;
 
+    // 如果已经为这个会话自动滚动过，跳过
+    if (autoScrolledSessionIdRef.current === sessionId) {
+      return;
+    }
+
     // 标记是否需要保持在底部
     let shouldStick = true;
-    
+    let scrollCount = 0;
+    const MAX_SCROLL_ATTEMPTS = 3; // 限制滚动次数，避免过度滚动
+    let userIsScrolling = false; // 检测用户是否正在滚动
+    let scrollTimeout: number | null = null;
+
     const scrollToBottom = () => {
-      if (shouldStick && el) {
+      // 如果用户正在滚动，不要干扰
+      if (userIsScrolling) return;
+
+      if (shouldStick && el && scrollCount < MAX_SCROLL_ATTEMPTS) {
         el.scrollTop = el.scrollHeight;
+        scrollCount++;
       }
     };
-    
+
+    // 监听用户滚动事件，避免自动滚动干扰用户操作
+    const handleUserScroll = () => {
+      userIsScrolling = true;
+      shouldStick = false; // 用户开始滚动后，立即停止自动滚动
+
+      // 清除之前的定时器
+      if (scrollTimeout !== null) {
+        clearTimeout(scrollTimeout);
+      }
+
+      // 300ms 后重置滚动状态
+      scrollTimeout = window.setTimeout(() => {
+        userIsScrolling = false;
+      }, 300);
+    };
+
+    // 添加滚动事件监听
+    el.addEventListener('scroll', handleUserScroll, { passive: true });
+
     // 立即尝试滚动
     scrollToBottom();
-    
-    // 监听内容大小变化
+
+    // 使用防抖的 ResizeObserver，减少滚动频率
+    let resizeTimer: number | null = null;
     const observer = new ResizeObserver(() => {
-      scrollToBottom();
+      if (resizeTimer !== null) {
+        cancelAnimationFrame(resizeTimer);
+      }
+      resizeTimer = requestAnimationFrame(() => {
+        scrollToBottom();
+      });
     });
-    
+
     // 监听内容区域（ScrollArea 的直接子元素）
     if (el.firstElementChild) {
       observer.observe(el.firstElementChild);
     } else {
       observer.observe(el);
     }
-    
-    // 1秒后停止强制滚动，允许用户自由滚动
+
+    // 200ms后停止强制滚动，允许用户自由滚动（从300ms减少到200ms）
     const timer = setTimeout(() => {
       shouldStick = false;
       observer.disconnect();
       autoScrolledSessionIdRef.current = sessionId;
-    }, 1000);
+      if (resizeTimer !== null) {
+        cancelAnimationFrame(resizeTimer);
+      }
+    }, 200);
 
     return () => {
       shouldStick = false;
+      userIsScrolling = false;
       observer.disconnect();
       clearTimeout(timer);
+      if (resizeTimer !== null) {
+        cancelAnimationFrame(resizeTimer);
+      }
+      if (scrollTimeout !== null) {
+        clearTimeout(scrollTimeout);
+      }
+      el.removeEventListener('scroll', handleUserScroll);
     };
-  }, [session?.sessionId]);
+  }, [session?.sessionId, sessionId]);
 
   const loadSession = async () => {
     if (!projectPath || !sessionId) return;
